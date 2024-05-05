@@ -6,13 +6,24 @@
         "particles",
         "clouds",
         "weather",
-        "final"
+        "normals"
     ],
     "passes": [
         {
+            "name": "normals",
+            "intarget": "itemEntity",
+            "outtarget": "normals",
+            "auxtargets": [
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                }
+            ]
+        },
+        {
             "name": "transparency",
-            "intarget": "minecraft:main",
-            "outtarget": "final",
+            "intarget": "normals",
+            "outtarget": "minecraft:main",
             "auxtargets": [
                 {
                     "name": "DiffuseDepthSampler",
@@ -59,11 +70,6 @@
                     "id": "weather:depth"
                 }
             ]
-        },
-        {
-            "name": "blit",
-            "intarget": "final",
-            "outtarget": "minecraft:main"
         }
     ]
 }
