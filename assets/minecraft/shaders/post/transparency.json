@@ -6,7 +6,8 @@
         "particles",
         "clouds",
         "weather",
-        "normals"
+        "normals",
+        "swap"
     ],
     "passes": [
         {
@@ -21,8 +22,27 @@
             ]
         },
         {
+            "name": "test",
+            "intarget": "minecraft:main",
+            "outtarget": "swap",
+            "auxtargets": [
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "DataSampler",
+                    "id": "itemEntity"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                }
+            ]
+        },
+        {
             "name": "transparency",
-            "intarget": "normals",
+            "intarget": "swap",
             "outtarget": "minecraft:main",
             "auxtargets": [
                 {
