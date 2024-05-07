@@ -67,13 +67,6 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, int index) {
     float dist = length(pos - fragPos);
     float attenuation = 1.0 / (0.1 + 0.02 * dist + 0.007 * (dist * dist));
 
-    vec4 cs4 = inverse(projection) * (vec4(texCoord, texture(DiffuseDepthSampler, texCoord).r, 1.0) * 2.0 - 1.0);
-    vec3 cs = cs4.xyz / cs4.w;
-
-    vec4 sDir = viewProjMat * vec4(lightDir, 1.0);
-    vec4 projDir4 = inverse(projection) * vec4(sDir.xyz / sDir.w, 1.0);
-    vec3 projDir =  normalize(projDir4.xyz / projDir4.w);
-
     bool shadowed = traceScreenSpaceRay(fragPos, lightDir, dist);
     if (!shadowed) {
         c *= attenuation * diff;
