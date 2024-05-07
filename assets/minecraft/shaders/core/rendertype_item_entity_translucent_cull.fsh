@@ -9,6 +9,8 @@ uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
 
+uniform mat4 ProjMat;
+
 in float vertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
@@ -40,13 +42,19 @@ void main() {
     if (marker == 1.0) {
         fragColor = vec4(1.0);
         vec2 pixel = floor(gl_FragCoord.xy);
-        if (pixel.y >= 1.0 || pixel.x >= 16.0) {
+        if (pixel.y >= 1.0 || pixel.x >= 32.0) {
             discard;
         }
 
-        int index = int(pixel.x);
-        float value = mvp[index / 4][index % 4];
-        fragColor = encodeFloat(value);
+        if (pixel.x < 16) {
+            int index = int(pixel.x);
+            float value = mvp[index / 4][index % 4];
+            fragColor = encodeFloat(value);
+        } else {
+            int index = int(pixel.x) - 16;
+            float value = ProjMat[index / 4][index % 4];
+            fragColor = encodeFloat(value);
+        }
         return;
     }
 
