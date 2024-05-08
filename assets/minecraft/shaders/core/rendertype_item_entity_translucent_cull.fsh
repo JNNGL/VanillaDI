@@ -18,6 +18,8 @@ in vec2 texCoord1;
 in vec4 normal;
 in float marker;
 flat in mat4 mvp;
+in vec4 position0;
+in vec4 position1;
 
 out vec4 fragColor;
 
@@ -38,22 +40,38 @@ vec4 encodeFloat(float v) {
     return encodeInt(int(v));
 }
 
+vec4 encodeFloat1024(float v) {
+    v *= 1024.0;
+    v = floor(v);
+    return encodeInt(int(v));
+}
+
 void main() {
     if (marker == 1.0) {
         fragColor = vec4(1.0);
         vec2 pixel = floor(gl_FragCoord.xy);
-        if (pixel.y >= 1.0 || pixel.x >= 32.0) {
+        if (pixel.y >= 1.0 || pixel.x >= 35.0) {
             discard;
         }
+
+        vec3 pos0 = position0.xyz / position0.w;
+        vec3 pos1 = position1.xyz / position1.w;
+        vec3 pos = pos0 * 0.5 + pos1 * 0.5;
 
         if (pixel.x < 16) {
             int index = int(pixel.x);
             float value = mvp[index / 4][index % 4];
             fragColor = encodeFloat(value);
-        } else {
+        } else if (pixel.x < 32) {
             int index = int(pixel.x) - 16;
             float value = ProjMat[index / 4][index % 4];
             fragColor = encodeFloat(value);
+        } else {
+            switch (int(pixel.x) - 32) {
+                case 0: fragColor = encodeFloat1024(pos.x); break;
+                case 1: fragColor = encodeFloat1024(pos.y); break;
+                case 2: fragColor = encodeFloat1024(pos.z); break;
+            }
         }
         return;
     }

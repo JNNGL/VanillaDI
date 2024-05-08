@@ -4,15 +4,13 @@
         "srcrgb": "one",
         "dstrgb": "zero"
     },
-    "vertex": "test",
-    "fragment": "test",
+    "vertex": "voxelize",
+    "fragment": "voxelize",
     "attributes": [ "Position" ],
     "samplers": [
         { "name": "DiffuseSampler" },
         { "name": "DiffuseDepthSampler" },
-        { "name": "NormalSampler" },
-        { "name": "DataSampler" },
-        { "name": "VoxelSampler" }
+        { "name": "NormalSampler" }
     ],
     "uniforms": [
         { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },

@@ -29,6 +29,8 @@ out vec2 texCoord2;
 out vec4 normal;
 out float marker;
 flat out mat4 mvp;
+out vec4 position0;
+out vec4 position1;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
@@ -43,6 +45,12 @@ void main() {
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 
     if (marker == 1.0) {
+        vec3 worldSpace = IViewRotMat * Position;
+        switch (gl_VertexID % 4) {
+            case 0: position0 = vec4(worldSpace, 1.0); break;
+            case 2: position1 = vec4(worldSpace, 1.0); break;
+        }
+
         vec2 bottomLeftCorner = vec2(-1.0);
         vec2 topRightCorner = vec2(0.0);
         switch (gl_VertexID % 4) {
@@ -52,6 +60,6 @@ void main() {
             case 3: gl_Position = vec4(topRightCorner.x,   topRightCorner.y,   0, 1); break;
         }
 
-        mvp = ProjMat * mat4(transpose(IViewRotMat));
+        mvp = ProjMat * transpose(mat4(IViewRotMat));
     }
 }
