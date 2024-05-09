@@ -36,12 +36,16 @@ vec3 reconstructPosition(in vec2 uv, in float z) {
 
 float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
 
-bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance) {
+bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance, out bool couldHit) {
+    couldHit = false;
+
+    const int samples = 50;
+
     vec3 sstwpos = origin;
-    float stepSize = min(maxRayDistance / 50, 0.05);
+    float stepSize = min(maxRayDistance / samples, 0.05);
     vec3 sspos;
     bool found = false;
-    for (int ss = 0; ss < 50; ss++) {
+    for (int ss = 0; ss < samples; ss++) {
         sstwpos += direction * stepSize;
         vec4 ssproj = viewProjMat * vec4(sstwpos, 1.0);
         sspos = ssproj.xyz / ssproj.w * 0.5 + 0.5;
@@ -49,16 +53,20 @@ bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance) {
             float ds = texture(DiffuseDepthSampler, sspos.xy).r;
             vec4 dswproj = mvpInverse * (vec4(sspos.xy, ds, 1.0) * 2.0 - 1.0);
             vec3 dswpos = dswproj.xyz / dswproj.w;
-            if (ds != 1.0 && ds <= sspos.z && length(dswpos - sstwpos) < 0.7) {
+            bool hit = ds != 1.0 && ds <= sspos.z;
+            couldHit = couldHit || hit;
+            if (hit && length(dswpos - sstwpos) < 0.2) {
                 return true;
             }
+        } else {
+            couldHit = true;
         }
     }
 
     return false;
 }
 
-float traceBlock(vec3 rayPos, vec3 rayDir, vec3 _mask, int texelX, int texelY, out vec3 normal) {
+float traceBlock(vec3 rayPos, vec3 rayDir, vec3 _mask, int texelX, int texelY, inout vec3 normal) {
     rayPos = clamp(rayPos, vec3(0.0001), vec3(7.9999));
     vec3 mapPos = floor(rayPos);
     vec3 raySign = sign(rayDir);
@@ -103,16 +111,13 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal) {
     vec3 deltaDist = 1.0 / direction;
     vec3 sideDist = ((currentVoxel - traversalOrigin) + 0.5 + raySign * 0.5) * deltaDist;
 
-    for (int i = 0; i < 64; i++) {
-        bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
-        bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
-        bvec3 mask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
-        mask.z = mask.z || !any(mask);
-        vec3 vmask = vec3(mask);
-        
-        currentVoxel += vmask * raySign;
-        sideDist += vmask * raySign * deltaDist;
+    bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
+    bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
+    bvec3 mask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
+    mask.z = mask.z || !any(mask);
+    vec3 vmask = vec3(mask);
 
+    for (int i = 0; i < 32; i++) {
         vec3 relativeBlock = floor(currentVoxel);
         if (clamp(relativeBlock, -32, 31) != relativeBlock) {
             break;
@@ -133,15 +138,26 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal) {
         if (found) {
             // normal = vmask;
             // return float(texelX) / 128;
-            // return 1.0;
+            //return 1.0;
             vec3 mini = ((currentVoxel - traversalOrigin) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
             float d = max(mini.x, max(mini.y, mini.z));
             vec3 intersect = traversalOrigin + direction * d;
             vec3 uv3d = intersect - currentVoxel;
+            if (currentVoxel == floor(traversalOrigin))
+               uv3d = traversalOrigin - currentVoxel;
             float dist = traceBlock(uv3d * 8.0, direction, vmask, texelX, texelY, normal);
 
-            if (dist != -1) return d + dist;
+            if (dist != -1) return d;
         }
+
+        bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
+        bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
+        bvec3 mask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
+        mask.z = mask.z || !any(mask);
+        vmask = vec3(mask);
+        
+        currentVoxel += vmask * raySign;
+        sideDist += vmask * raySign * deltaDist;
     }
 
     return -1.0;
@@ -160,14 +176,15 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, int index) {
     float dist = length(pos - fragPos);
     float attenuation = 1.0 / (0.1 + 0.02 * dist + 0.007 * (dist * dist));
 
-    vec3 norm;
-    float traceDist = traceVoxels(fragPos - offset, normalize(vec3(0, 1, 0)), norm);
-    // if (traceDist == -2.0 || true) {
-    //     color.rgb = vec3(traceDist, 0, 0);
-    //     return;
+    bool shadowed;
+    // bool couldHit;
+    // bool shadowed = traceScreenSpaceRay(fragPos, lightDir, dist, couldHit);
+    // if (!shadowed && couldHit) {
+        vec3 norm;
+        float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), lightDir, norm);
+        shadowed = traceDist != -1.0 && traceDist < dist;
     // }
 
-    bool shadowed = traceDist != -1.0;
     if (!shadowed) {
         c *= attenuation * diff;
         color.rgb *= (1.0 + c);
@@ -187,16 +204,16 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
-    // shade(color, position, normal, 0);
+    shade(color, position, normal, 0);
     //shade(color, position, normal, 1);
 
     color.rgb = acesFilm(color.rgb);
     fragColor = color;
 
-    float r = traceVoxels(origin - offset, direction, normal);
-    fragColor = vec4(normal * 0.5 + 0.5, 1.0);
+    // float r = traceVoxels(origin - offset + vec3(0.5, 0.5, 0.0), direction, normal);
+    // fragColor = vec4(normal * 0.5 + 0.5, 1.0);
 
     // fragColor = texture(VoxelSampler, texCoord);
-    // fragColor.rgb = mix(fragColor.rgb, color.rgb, 0.5);
+    fragColor.rgb = mix(fragColor.rgb, color.rgb, 0.5);
     gl_FragDepth = depth;
 }

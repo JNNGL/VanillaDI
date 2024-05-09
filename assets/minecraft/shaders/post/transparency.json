@@ -8,7 +8,8 @@
         "weather",
         "normals",
         "swap",
-        { "name": "voxels", "width": 2048, "height": 2048 }
+        { "name": "voxels", "width": 2048, "height": 2048 },
+        { "name": "voxelCache", "width": 2048, "height": 2048 }
     ],
     "passes": [
         {
@@ -34,8 +35,17 @@
                 {
                     "name": "NormalSampler",
                     "id": "normals"
+                },
+                {
+                    "name": "VoxelCacheSampler",
+                    "id": "voxelCache"
                 }
             ]
+        },
+        {
+            "name": "blit_with_depth",
+            "intarget": "voxels",
+            "outtarget": "voxelCache"
         },
         {
             "name": "test",

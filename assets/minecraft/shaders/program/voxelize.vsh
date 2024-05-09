@@ -3,6 +3,7 @@
 in vec4 Position;
 
 uniform sampler2D DiffuseSampler;
+uniform sampler2D VoxelCacheSampler;
 
 uniform mat4 ProjMat;
 uniform vec2 InSize;
@@ -11,6 +12,8 @@ out vec2 texCoord;
 flat out mat4 viewProjMat;
 flat out mat4 mvpInverse;
 flat out vec3 offset;
+flat out vec3 position;
+flat out vec3 prevPosition;
 
 int decodeInt(vec3 ivec) {
     ivec *= 255.0;
@@ -48,10 +51,15 @@ void main() {
 
     for (int i = 0; i < 3; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(32 + i, 0), 0);
-        offset[i] = decodeFloat1024(color.rgb);
+        position[i] = decodeFloat1024(color.rgb);
     }
 
-    offset = fract(offset);
+    for (int i = 0; i < 3; i++) {
+        vec4 color = texelFetch(VoxelCacheSampler, ivec2(i, 0), 0);
+        prevPosition[i] = decodeFloat1024(color.rgb);
+    }
+
+    offset = fract(position);
 
     vec4 outPos = corners[gl_VertexID];
     gl_Position = outPos;

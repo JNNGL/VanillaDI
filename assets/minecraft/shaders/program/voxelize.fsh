@@ -3,6 +3,7 @@
 uniform sampler2D DiffuseSampler;
 uniform sampler2D DiffuseDepthSampler;
 uniform sampler2D NormalSampler;
+uniform sampler2D VoxelCacheSampler;
 
 uniform vec2 InSize;
 
@@ -10,12 +11,31 @@ in vec2 texCoord;
 flat in mat4 viewProjMat;
 flat in mat4 mvpInverse;
 flat in vec3 offset;
+flat in vec3 position;
+flat in vec3 prevPosition;
 
 out vec4 fragColor;
 
+vec4 encodeInt(int i) {
+    int s = int(i < 0) * 128;
+    i = abs(i);
+    int r = i % 256;
+    i = i / 256;
+    int g = i % 256;
+    i = i / 256;
+    int b = i % 256;
+    return vec4(float(r) / 255.0, float(g) / 255.0, float(b + s) / 255.0, 1.0);
+}
+
+vec4 encodeFloat1024(float v) {
+    v *= 1024.0;
+    v = floor(v);
+    return encodeInt(int(v));
+}
+
 bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid) {
     valid = false;
-    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z)) / 8 + offset;
+    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - vec3(0.5, 0.5, 0.0);
     vec4 homog = viewProjMat * vec4(worldSpace, 1.0);
     vec3 clip = homog.xyz / homog.w;
     if (clamp(clip.xy, -1, 1) != clip.xy) {
@@ -34,8 +54,7 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid) {
     return distance(backProj, worldSpace) < 0.2;
 }
 
-void collectRow(out uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {
-    row = 0u;
+void collectRow(inout uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {
     uint shift = 0u;
     for (int i = 0; i < 8; i++) {
         bool valid;
@@ -48,18 +67,15 @@ void collectRow(out uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {
 }
 
 void main() {
-    // Discard marker
-    if (texCoord.y <= 1.0 / InSize.y && texCoord.x <= 16.0 / InSize.x) {
-        fragColor = vec4(0.0);
+    ivec2 coord = ivec2(gl_FragCoord.xy);
+    if (coord.y == 0 && coord.x < 3) {
+        switch (coord.x) {
+            case 0: fragColor = encodeFloat1024(position.x); break;
+            case 1: fragColor = encodeFloat1024(position.y); break;
+            case 2: fragColor = encodeFloat1024(position.z); break;
+        }
         return;
     }
-
-    ivec2 coord = ivec2(gl_FragCoord.xy);
-
-    uint row0;
-    uint row1;
-    uint row2;
-    uint row3;
 
     ivec2 blockFragCoord = coord / ivec2(16, 1);
     int voxelFragCoord = coord.x % 16;
@@ -67,6 +83,25 @@ void main() {
     int voxelRowOffset = (voxelFragCoord % 2) * 4;
     int blockLinCoord = blockFragCoord.y * 128 + blockFragCoord.x;
     ivec3 blockCoord = ivec3(blockLinCoord % 64, (blockLinCoord / 64) % 64, (blockLinCoord / 4096) % 64) - 32;
+
+    bool hasCache = texelFetch(VoxelCacheSampler, ivec2(0, 0), 0) != vec4(0.0);
+    uint row0 = 0u;
+    uint row1 = 0u;
+    uint row2 = 0u;
+    uint row3 = 0u;
+
+    ivec3 blockOff = ivec3(floor(position) - floor(prevPosition));
+    ivec3 prevBlock = blockCoord - blockOff;
+    if (hasCache && clamp(prevBlock, -32, 31) == prevBlock) {
+        int linearIndex = (int(prevBlock.z) + 32) * 64 * 64 + (int(prevBlock.y) + 32) * 64 + int(prevBlock.x) + 32;
+        int texelY = linearIndex / 128;
+        int texelX = linearIndex % 128;
+        vec4 cache = texelFetch(VoxelCacheSampler, ivec2(texelX * 16 + voxelFragCoord, texelY), 0);
+        row0 = uint(cache[0] * 255);
+        row1 = uint(cache[1] * 255);
+        row2 = uint(cache[2] * 255);
+        row3 = uint(cache[3] * 255);
+    }
 
     collectRow(row0, blockCoord, voxelRowOffset, voxelDepth);
     collectRow(row1, blockCoord, voxelRowOffset + 1, voxelDepth);

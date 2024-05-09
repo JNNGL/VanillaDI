@@ -10,7 +10,8 @@
     "samplers": [
         { "name": "DiffuseSampler" },
         { "name": "DiffuseDepthSampler" },
-        { "name": "NormalSampler" }
+        { "name": "NormalSampler" },
+        { "name": "VoxelCacheSampler" }
     ],
     "uniforms": [
         { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
