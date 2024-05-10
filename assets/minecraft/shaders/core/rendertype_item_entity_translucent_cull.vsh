@@ -44,6 +44,8 @@ void main() {
     texCoord2 = UV2;
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 
+    position0 = position1 = vec4(0.0);
+
     if (marker == 1.0) {
         vec3 worldSpace = IViewRotMat * Position;
         switch (gl_VertexID % 4) {

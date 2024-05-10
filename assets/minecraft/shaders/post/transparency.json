@@ -9,7 +9,8 @@
         "normals",
         "swap",
         { "name": "voxels", "width": 2048, "height": 2048 },
-        { "name": "voxelCache", "width": 2048, "height": 2048 }
+        { "name": "voxelCache", "width": 2048, "height": 2048 },
+        { "name": "voxelLod", "width": 128, "height": 2048 }
     ],
     "passes": [
         {
@@ -43,6 +44,11 @@
             ]
         },
         {
+            "name": "build_lod",
+            "intarget": "voxels",
+            "outtarget": "voxelLod"
+        },
+        {
             "name": "blit_with_depth",
             "intarget": "voxels",
             "outtarget": "voxelCache"
@@ -67,6 +73,10 @@
                 {
                     "name": "VoxelSampler",
                     "id": "voxels"
+                },
+                {
+                    "name": "VoxelLodSampler",
+                    "id": "voxelLod"
                 }
             ]
         },

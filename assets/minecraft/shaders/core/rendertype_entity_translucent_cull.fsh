@@ -66,7 +66,7 @@ void main() {
             case 0: color = encodeFloat1024(pos.x); break;
             case 1: color = encodeFloat1024(pos.y); break;
             case 2: color = encodeFloat1024(pos.z); break;
-            case 3: color = index == 0 ? vec4(1, 1, 0.5, 1.0) : vec4(0.25, 0.25, 1.0, 1.0); break;
+            case 3: color = index == 0 ? vec4(1, 0.25, 0.25, 1.0) : vec4(0.25, 0.25, 1.0, 1.0); break;
             case 4: color = vec4(0.0, 0.0, 0.0, 1.0); break;
         }
 
