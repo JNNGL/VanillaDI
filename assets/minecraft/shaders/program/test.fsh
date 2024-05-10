@@ -186,13 +186,27 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal) {
     return -1.0;
 }
 
-void shade(inout vec4 color, vec3 fragPos, vec3 normal, int index, inout vec3 seed) {
+struct reservoir {
+    int index;
+    float weight;
+    float wSum;
+    float m;
+};
+
+struct light {
+    vec3 position;
+    vec3 normal;
+    vec3 direction;
+    vec3 radiance;
+    float dist;
+};
+
+light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     const float width = 1.5;
     const float height = 1.0;
     const float area = width * height;
     const float intensity = 10;
     const vec3 lnorm = vec3(0, 0, 1);
-    const int samples = 1;
 
     int base = index * 5;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
@@ -200,33 +214,73 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, int index, inout vec3 se
     float z = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 2, 0), 0).rgb);
     vec3 c = texelFetch(DiffuseSampler, ivec2(base + 3, 0), 0).rgb;
 
-    float accum = 0.0;
+    vec3 pos = vec3(x, y, z) + vec3(random(seed) * width - width * 0.5, random(seed) * height - height * 0.5, 0);
+    vec3 lightDir = normalize(pos - fragPos);
 
-    for (int i = 0; i < samples; i++) {
-        vec3 pos = vec3(x, y, z) + vec3(random(seed) * width - width * 0.5, random(seed) * height - height * 0.5, 0);
-        vec3 lightDir = normalize(pos - fragPos);
-        if (dot(lightDir, lnorm) < 0) {
-            return;
-        }
+    float diff = max(dot(normal, lightDir), 0.0);
+    float dist = length(pos - fragPos);
+    
+    float dist2 = dist * dist;
+    float cosine = dot(lightDir, lnorm);
+    float attenuation = max(0.0, sign(cosine)) * (2 * 3.1415926535 * intensity) / (dist2 / abs(cosine * area)) * diff;
 
-        float diff = max(dot(normal, lightDir), 0.0);
-        float dist = length(pos - fragPos);
-        
-        float dist2 = dist * dist;
-        float cosine = abs(dot(lightDir, lnorm));
-        float attenuation = (2 * 3.1415926535 * intensity) / (dist2 / (cosine * area)) * diff;
+    light l;
+    l.position = pos;
+    l.normal = lnorm;
+    l.direction = lightDir;
+    l.radiance = c * attenuation;
+    l.dist = dist;
 
-        bool shadowed;
-        vec3 norm;
-        float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), lightDir, norm);
-        shadowed = traceDist != -1.0 && traceDist < dist;
-        
-        if (!shadowed) accum += attenuation;
+    return l;
+}
+
+bool updateReservoir(inout reservoir res, int i, float w, float n, inout vec3 seed) {
+    res.wSum += w;
+    res.m += n;
+    bool u = random(seed) < w / res.wSum;
+    if (u) res.index = i;
+    return u;
+}
+
+void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
+    const int samples = 1;
+
+    reservoir res;
+    res.wSum = 0;
+    res.m = 0;
+
+    const int M = 8;
+    const int lightCount = 3;
+
+    float pdf = 1.0 / lightCount;
+
+    light survived;
+    survived.radiance = vec3(0.0);
+
+    for (int i = 0; i < M; i++) {
+        int index = int(floor(random(seed) * (lightCount - 0.001)));
+        light l = sampleLight(index, fragPos, normal, seed);
+        float w = length(l.radiance) / pdf;
+        if (updateReservoir(res, index, w, 1, seed))
+            survived = l;
     }
 
-    accum = max(0, accum) / samples;
-    c *= accum;
-    color.rgb *= (1.0 + c);
+    if (survived.radiance == vec3(0.0)) {
+        return;
+    }
+
+    vec3 norm;
+    float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), survived.direction, norm);
+    bool shadowed = traceDist != -1.0 && traceDist < survived.dist;
+    if (!shadowed) {
+        vec3 radiance = survived.radiance;
+        float p = length(radiance);
+        res.weight = p > 0.0 ? (1.0 / p) * res.wSum / res.m : 0.0;
+        radiance *= res.weight;
+        color.rgb *= (1.0 + radiance);
+    } else {
+        res.weight = 0.0;
+    }
 }
 
 vec3 acesFilm(vec3 x) {
@@ -244,8 +298,7 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
-    shade(color, position, normal, 0, seed);
-    shade(color, position, normal, 1, seed);
+    shade(color, position, normal, seed);
 
     color.rgb = acesFilm(color.rgb);
     fragColor = color;
