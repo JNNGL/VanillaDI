@@ -16,7 +16,6 @@ uniform sampler2D Sampler2;
 
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
-uniform mat3 IViewRotMat;
 uniform int FogShape;
 
 uniform vec3 Light0_Direction;
@@ -44,7 +43,7 @@ void main() {
 
     position0 = position1 = vec4(0.0);
 
-    vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
+    vertexDistance = fog_distance(Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     lightMapColor = texelFetch(Sampler2, UV2 / 16, 0);
     overlayColor = texelFetch(Sampler1, UV1, 0);
@@ -52,7 +51,7 @@ void main() {
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 
     if (marker == 1.0) {
-        vec3 worldSpace = IViewRotMat * Position;
+        vec3 worldSpace = Position;
         switch (gl_VertexID % 4) {
             case 0: position0 = vec4(worldSpace, 1.0); break;
             case 2: position1 = vec4(worldSpace, 1.0); break;

@@ -15,7 +15,6 @@ uniform sampler2D Sampler2;
 
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
-uniform mat3 IViewRotMat;
 uniform int FogShape;
 
 uniform vec3 Light0_Direction;
@@ -37,7 +36,7 @@ void main() {
 
     marker = texture(Sampler0, UV0).rgb == vec3(76, 195, 86) / 255 ? 1.0 : 0.0;
 
-    vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
+    vertexDistance = fog_distance(Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color) * texelFetch(Sampler2, UV2 / 16, 0);
     texCoord0 = UV0;
     texCoord1 = UV1;
@@ -47,7 +46,7 @@ void main() {
     position0 = position1 = vec4(0.0);
 
     if (marker == 1.0) {
-        vec3 worldSpace = IViewRotMat * Position;
+        vec3 worldSpace = Position;
         switch (gl_VertexID % 4) {
             case 0: position0 = vec4(worldSpace, 1.0); break;
             case 2: position1 = vec4(worldSpace, 1.0); break;
@@ -62,6 +61,6 @@ void main() {
             case 3: gl_Position = vec4(topRightCorner.x,   topRightCorner.y,   0, 1); break;
         }
 
-        mvp = ProjMat * transpose(mat4(IViewRotMat));
+        mvp = ProjMat * ModelViewMat;
     }
 }
