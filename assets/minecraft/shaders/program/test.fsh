@@ -1,4 +1,4 @@
-#version 420
+#version 330
 
 uniform sampler2D DiffuseSampler;
 uniform sampler2D DiffuseDepthSampler;
@@ -7,6 +7,7 @@ uniform sampler2D VoxelSampler;
 uniform sampler2D VoxelLodSampler;
 
 uniform vec2 InSize;
+uniform float Time;
 
 in vec2 texCoord;
 flat in mat4 mvpInverse;
@@ -134,7 +135,7 @@ float traceBlock(vec3 rayPos, vec3 rayDir, vec3 _mask, int texelX, int texelY, i
     return -1.0;
 }
 
-float traceVoxels(vec3 origin, vec3 direction, out vec3 normal) {
+float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
     normal = vec3(0.0);
     vec3 traversalOrigin = origin;
     vec3 currentVoxel = floor(traversalOrigin);
@@ -158,12 +159,16 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal) {
         int texelY = linearIndex / 128;
         int texelX = linearIndex % 128;
         
+        vec3 mini = ((currentVoxel - traversalOrigin) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
+        float d = max(mini.x, max(mini.y, mini.z));
+        if (d > maxDist) {
+            return -1.0;
+        }
+
         if (texelFetch(VoxelLodSampler, ivec2(texelX, texelY), 0) != vec4(0.0)) {
             // normal = vmask;
             // return float(texelX) / 128;
             //return 1.0;
-            vec3 mini = ((currentVoxel - traversalOrigin) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
-            float d = max(mini.x, max(mini.y, mini.z));
             vec3 intersect = traversalOrigin + direction * d;
             vec3 uv3d = intersect - currentVoxel;
             if (currentVoxel == floor(traversalOrigin))
@@ -206,7 +211,16 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     const float height = 1.0;
     const float area = width * height;
     const float intensity = 10;
-    const vec3 lnorm = vec3(0, 0, 1);
+    
+    vec3 lnorm = vec3(0, 0, 1);
+    /*float t = Time;
+    if (index > 0) t += 0.25 * index;*/
+    float t = 0;
+    float cosTheta = cos(t * 2 * 3.1415926535);
+    float sinTheta = sin(t * 2 * 3.1415926535);
+    lnorm = mat3(cosTheta, 0, sinTheta, 0, 1, 0, -sinTheta, 0, cosTheta) * lnorm;
+    vec3 bitangent = vec3(0, 1, 0);
+    vec3 tangent = cross(bitangent, lnorm);
 
     int base = index * 5;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
@@ -214,7 +228,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     float z = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 2, 0), 0).rgb);
     vec3 c = texelFetch(DiffuseSampler, ivec2(base + 3, 0), 0).rgb;
 
-    vec3 pos = vec3(x, y, z) + vec3(random(seed) * width - width * 0.5, random(seed) * height - height * 0.5, 0);
+    vec3 pos = vec3(x, y, z) + (random(seed) * width - width * 0.5) * tangent + (random(seed) * height - height * 0.5) * bitangent;
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
@@ -243,8 +257,6 @@ bool updateReservoir(inout reservoir res, int i, float w, float n, inout vec3 se
 }
 
 void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
-    const int samples = 1;
-
     reservoir res;
     res.wSum = 0;
     res.m = 0;
@@ -266,19 +278,21 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     }
 
     if (survived.radiance == vec3(0.0)) {
+        color.rgb = vec3(0.0);
         return;
     }
 
     vec3 norm;
-    float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), survived.direction, norm);
+    float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), survived.direction, norm, survived.dist);
     bool shadowed = traceDist != -1.0 && traceDist < survived.dist;
     if (!shadowed) {
         vec3 radiance = survived.radiance;
         float p = length(radiance);
         res.weight = p > 0.0 ? (1.0 / p) * res.wSum / res.m : 0.0;
         radiance *= res.weight;
-        color.rgb *= (1.0 + radiance);
+        color.rgb = radiance;
     } else {
+        color.rgb = vec3(0.0);
         res.weight = 0.0;
     }
 }
@@ -287,26 +301,25 @@ vec3 acesFilm(vec3 x) {
     return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0., 1.);
 }
 
+vec4 encodeHdr(vec3 color) {
+    float m = max(color.r, max(color.g, color.b));
+    if (m == 0.0) return vec4(0.0);
+    if (m < 1.0) return vec4(color, 1.0);
+    return vec4(color / m, 1.0 / m);
+}
+
 void main() {
     float depth = texture(DiffuseDepthSampler, texCoord).r;
     vec3 position = reconstructPosition(texCoord, depth);
     vec3 normal = normalize(texture(NormalSampler, texCoord).rgb * 2.0 - 1.0);
     vec4 color = texture(DiffuseSampler, texCoord);
 
-    vec3 seed = vec3(texCoord, 0);
+    vec3 seed = vec3(texCoord, Time);
 
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
     shade(color, position, normal, seed);
-
-    color.rgb = acesFilm(color.rgb);
-    fragColor = color;
-
-    // float r = traceVoxels(origin - offset + vec3(0.5, 0.5, 0.0), direction, normal);
-    // fragColor = vec4(normal * 0.5 + 0.5, 1.0);
-
-    // fragColor = texture(VoxelSampler, texCoord);
-    fragColor.rgb = mix(fragColor.rgb, color.rgb, 0.5);
-    gl_FragDepth = depth;
+    
+    fragColor = encodeHdr(color.rgb);
 }

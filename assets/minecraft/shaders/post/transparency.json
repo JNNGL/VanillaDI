@@ -10,7 +10,12 @@
         "swap",
         { "name": "voxels", "width": 2048, "height": 2048 },
         { "name": "voxelCache", "width": 2048, "height": 2048 },
-        { "name": "voxelLod", "width": 128, "height": 2048 }
+        { "name": "voxelLod", "width": 128, "height": 2048 },
+        "temporal",
+        "previousTemporal",
+        "previousMain",
+        "previousNormals",
+        "previousData"
     ],
     "passes": [
         {
@@ -49,11 +54,6 @@
             "outtarget": "voxelLod"
         },
         {
-            "name": "blit_with_depth",
-            "intarget": "voxels",
-            "outtarget": "voxelCache"
-        },
-        {
             "name": "test",
             "intarget": "minecraft:main",
             "outtarget": "swap",
@@ -80,6 +80,104 @@
                 }
             ]
         },
+
+        {
+            "todo": "Clean this up",
+            "name": "temporal",
+            "intarget": "itemEntity",
+            "outtarget": "temporal",
+            "auxtargets": [
+                {
+                    "name": "RadianceSampler",
+                    "id": "swap"
+                },
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "PreviousDataSampler",
+                    "id": "previousData"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                },
+                {
+                    "name": "PreviousNormalSampler",
+                    "id": "previousNormals"
+                },
+                {
+                    "name": "PreviousFrameSampler",
+                    "id": "previousTemporal:depth"
+                },
+                {
+                    "name": "PreviousRadianceSampler",
+                    "id": "previousTemporal"
+                },
+                {
+                    "name": "PreviousDepthSampler",
+                    "id": "previousMain:depth"
+                }
+            ]
+        },
+        
+        {
+            "name": "blit_with_depth",
+            "intarget": "voxels",
+            "outtarget": "voxelCache"
+        },
+        {
+            "name": "blit",
+            "intarget": "normals",
+            "outtarget": "previousNormals"
+        },
+        {
+            "name": "blit_with_depth",
+            "intarget": "minecraft:main",
+            "outtarget": "previousMain",
+            "auxtargets": [
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                }
+            ]
+        },
+        {
+            "name": "blit_with_depth",
+            "intarget": "temporal",
+            "outtarget": "previousTemporal",
+            "auxtargets": [
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "temporal:depth"
+                }
+            ]
+        },
+        {
+            "name": "blit_with_depth",
+            "intarget": "itemEntity",
+            "outtarget": "previousData",
+            "auxtargets": [
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "itemEntity:depth"
+                }
+            ]
+        },
+
+        {
+            "name": "blend",
+            "intarget": "minecraft:main",
+            "outtarget": "swap",
+            "auxtargets": [
+                {
+                    "name": "LightSampler",
+                    "id": "temporal"
+                }
+            ]
+        },
+
         {
             "name": "transparency",
             "intarget": "swap",
@@ -87,7 +185,7 @@
             "auxtargets": [
                 {
                     "name": "DiffuseDepthSampler",
-                    "id": "minecraft:main:depth"
+                    "id": "previousMain:depth"
                 },
                 {
                     "name": "TranslucentSampler",
