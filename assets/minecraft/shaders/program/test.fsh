@@ -30,6 +30,11 @@ float decodeFloat1024(vec3 ivec) {
     return float(v) / 1024.0;
 }
 
+float decodeFloat(vec3 ivec) {
+    int v = decodeInt(ivec);
+    return float(v) / 40000.0;
+}
+
 vec3 reconstructPosition(in vec2 uv, in float z) {
   vec4 position_s = vec4(uv, z, 1.0f) * 2.0 - 1.0;
   vec4 position_v = mvpInverse * position_s;
@@ -211,22 +216,22 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     const float height = 1.0;
     const float area = width * height;
     const float intensity = 10;
-    
-    vec3 lnorm = vec3(0, 0, 1);
-    /*float t = Time;
-    if (index > 0) t += 0.25 * index;*/
-    float t = 0;
-    float cosTheta = cos(t * 2 * 3.1415926535);
-    float sinTheta = sin(t * 2 * 3.1415926535);
-    lnorm = mat3(cosTheta, 0, sinTheta, 0, 1, 0, -sinTheta, 0, cosTheta) * lnorm;
-    vec3 bitangent = vec3(0, 1, 0);
-    vec3 tangent = cross(bitangent, lnorm);
 
-    int base = index * 5;
+    int base = index * 11;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
     float y = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 1, 0), 0).rgb);
     float z = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 2, 0), 0).rgb);
-    vec3 c = texelFetch(DiffuseSampler, ivec2(base + 3, 0), 0).rgb;
+    float tx = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 3, 0), 0).rgb);
+    float ty = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 4, 0), 0).rgb);
+    float tz = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 5, 0), 0).rgb);
+    float bx = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 6, 0), 0).rgb);
+    float by = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 7, 0), 0).rgb);
+    float bz = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 8, 0), 0).rgb);
+    vec3 c = texelFetch(DiffuseSampler, ivec2(base + 9, 0), 0).rgb;
+
+    vec3 tangent = normalize(vec3(tx, ty, tz));
+    vec3 bitangent = normalize(vec3(bx, by, bz));
+    vec3 lnorm = normalize(cross(tangent, bitangent));
 
     vec3 pos = vec3(x, y, z) + (random(seed) * width - width * 0.5) * tangent + (random(seed) * height - height * 0.5) * bitangent;
     vec3 lightDir = normalize(pos - fragPos);

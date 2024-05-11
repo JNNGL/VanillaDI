@@ -32,6 +32,8 @@ out float marker;
 flat out int type;
 out vec4 position0;
 out vec4 position1;
+out vec4 position2;
+out vec4 position3;
 flat out int index;
 
 void main() {
@@ -42,7 +44,10 @@ void main() {
     type = 0;
     index = int(Color.b * 255);
 
-    position0 = position1 = vec4(0.0);
+    position0 = 
+    position1 = 
+    position2 = 
+    position3 = vec4(0.0);
 
     vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
@@ -55,7 +60,9 @@ void main() {
         vec3 worldSpace = IViewRotMat * Position;
         switch (gl_VertexID % 4) {
             case 0: position0 = vec4(worldSpace, 1.0); break;
-            case 2: position1 = vec4(worldSpace, 1.0); break;
+            case 1: position1 = vec4(worldSpace, 1.0); break;
+            case 2: position2 = vec4(worldSpace, 1.0); break;
+            case 3: position3 = vec4(worldSpace, 1.0); break;
         }
 
         // TODO: better vertex positions
