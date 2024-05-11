@@ -256,7 +256,7 @@ bool updateReservoir(inout reservoir res, int i, float w, float n, inout vec3 se
     return u;
 }
 
-void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
+vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     reservoir res;
     res.wSum = 0;
     res.m = 0;
@@ -278,8 +278,7 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     }
 
     if (survived.radiance == vec3(0.0)) {
-        color.rgb = vec3(0.0);
-        return;
+        return vec3(0.0);
     }
 
     vec3 norm;
@@ -289,16 +288,11 @@ void shade(inout vec4 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
         vec3 radiance = survived.radiance;
         float p = length(radiance);
         res.weight = p > 0.0 ? (1.0 / p) * res.wSum / res.m : 0.0;
-        radiance *= res.weight;
-        color.rgb = radiance;
+        return radiance * res.weight;
     } else {
-        color.rgb = vec3(0.0);
         res.weight = 0.0;
+        return vec3(0.0);
     }
-}
-
-vec3 acesFilm(vec3 x) {
-    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0., 1.);
 }
 
 vec4 encodeHdr(vec3 color) {
@@ -319,7 +313,7 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
-    shade(color, position, normal, seed);
+    color.rgb = shade(color.rgb, position, normal, seed);
     
     fragColor = encodeHdr(color.rgb);
 }
