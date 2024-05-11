@@ -1,4 +1,4 @@
-#version 150
+#version 420
 
 uniform sampler2D RadianceSampler;
 uniform sampler2D DiffuseDepthSampler;
@@ -65,7 +65,8 @@ void main() {
         return;
     }
 
-    float prevDepth = texture(PreviousDepthSampler, screenSpace.xy).r;
+    vec4 prevDepthData = texture(PreviousDepthSampler, screenSpace.xy);
+    float prevDepth = uintBitsToFloat(packUnorm4x8(prevDepthData));
     if (abs(screenSpace.z - prevDepth) > 0.003 * screenSpace.z) {
         return;
     }
@@ -82,5 +83,6 @@ void main() {
     vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), 0.1));
     fragColor = encodeHdr(mixedSample.rgb);
     
+    // Writing to gl_FragDepth doens't work with sodium. not sure if it worth computing it in a separate pass.
     gl_FragDepth = clamp(frame, 0.0, 1.0);
 }

@@ -56,7 +56,6 @@ void main() {
     // Discard marker
     if (texCoord.y <= 1.0 / InSize.y && texCoord.x <= 16.0 / InSize.x) {
         fragColor = vec4(0.0);
-        gl_FragDepth = 1.0;
         return;
     }
 

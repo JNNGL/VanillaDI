@@ -11,9 +11,10 @@
         { "name": "voxels", "width": 2048, "height": 2048 },
         { "name": "voxelCache", "width": 2048, "height": 2048 },
         { "name": "voxelLod", "width": 128, "height": 2048 },
+        "final",
         "temporal",
         "previousTemporal",
-        "previousMain",
+        "previousDepth",
         "previousNormals",
         "previousData"
     ],
@@ -117,25 +118,25 @@
                 },
                 {
                     "name": "PreviousDepthSampler",
-                    "id": "previousMain:depth"
+                    "id": "previousDepth"
                 }
             ]
         },
         
         {
-            "name": "blit_with_depth",
+            "name": "copy",
             "intarget": "voxels",
             "outtarget": "voxelCache"
         },
         {
-            "name": "blit",
+            "name": "copy",
             "intarget": "normals",
             "outtarget": "previousNormals"
         },
         {
-            "name": "blit_with_depth",
+            "name": "copy_depth",
             "intarget": "minecraft:main",
-            "outtarget": "previousMain",
+            "outtarget": "previousDepth",
             "auxtargets": [
                 {
                     "name": "DiffuseDepthSampler",
@@ -144,7 +145,7 @@
             ]
         },
         {
-            "name": "blit_with_depth",
+            "name": "copy",
             "intarget": "temporal",
             "outtarget": "previousTemporal",
             "auxtargets": [
@@ -155,21 +156,15 @@
             ]
         },
         {
-            "name": "blit_with_depth",
+            "name": "copy",
             "intarget": "itemEntity",
-            "outtarget": "previousData",
-            "auxtargets": [
-                {
-                    "name": "DiffuseDepthSampler",
-                    "id": "itemEntity:depth"
-                }
-            ]
+            "outtarget": "previousData"
         },
 
         {
             "name": "blend",
             "intarget": "minecraft:main",
-            "outtarget": "swap",
+            "outtarget": "final",
             "auxtargets": [
                 {
                     "name": "LightSampler",
@@ -180,12 +175,12 @@
 
         {
             "name": "transparency",
-            "intarget": "swap",
-            "outtarget": "minecraft:main",
+            "intarget": "final",
+            "outtarget": "swap",
             "auxtargets": [
                 {
                     "name": "DiffuseDepthSampler",
-                    "id": "previousMain:depth"
+                    "id": "minecraft:main:depth"
                 },
                 {
                     "name": "TranslucentSampler",
@@ -228,6 +223,11 @@
                     "id": "weather:depth"
                 }
             ]
+        },
+        {
+            "name": "blit",
+            "intarget": "swap",
+            "outtarget": "minecraft:main"
         }
     ]
 }
