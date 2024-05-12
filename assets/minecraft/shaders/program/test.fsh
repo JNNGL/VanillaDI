@@ -4,10 +4,6 @@
 
 #define ENABLE_SHADOWS
 
-const bool[] UNIDIRECTIONAL = bool[](
-    true
-);
-
 //////////////////////////////
 
 uniform sampler2D DiffuseSampler;
@@ -219,12 +215,31 @@ struct light {
     float dist;
 };
 
-light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
+bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
+               inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
     const float width = 1.5;
     const float height = 1.0;
-    const float area = width * height;
     const float intensity = 10;
 
+    pointOnLight = position + (random(seed) * width - width * 0.5) * tbn[0] + (random(seed) * height - height * 0.5) * tbn[1];
+    vec3 direction = normalize(pointOnLight - fragPos);
+    
+    color *= intensity;
+
+    return dot(direction, normal) < 0;
+}
+
+bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
+                        inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
+    switch (type) {
+        case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
+        // Add your custom light here
+    }
+
+    return false;
+}
+
+light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     int base = index * 11;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
     float y = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 1, 0), 0).rgb);
@@ -239,9 +254,11 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
 
     vec3 tangent = normalize(vec3(tx, ty, tz));
     vec3 bitangent = normalize(vec3(bx, by, bz));
-    vec3 lnorm = normalize(cross(tangent, bitangent));
+    mat3 tbn = mat3(tangent, bitangent, normalize(cross(tangent, bitangent)));
 
-    vec3 pos = vec3(x, y, z) + (random(seed) * width - width * 0.5) * tangent + (random(seed) * height - height * 0.5) * bitangent;
+    float area;
+    vec3 lnorm = tbn[2], pos = vec3(x, y, z);
+    bool valid = samplePointOnLight(0, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, seed);
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
@@ -249,7 +266,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     
     float dist2 = dist * dist;
     float cosine = dot(lightDir, lnorm);
-    float attenuation = (UNIDIRECTIONAL[0] ? max(0.0, -sign(cosine)) : 1.0) * (2 * 3.1415926535 * intensity) / (dist2 / abs(cosine * area)) * diff;
+    float attenuation = float(valid) * (2 * 3.1415926535) / (dist2 / abs(cosine * area)) * diff;
 
     light l;
     l.position = pos;
