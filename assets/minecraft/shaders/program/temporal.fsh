@@ -80,7 +80,7 @@ void main() {
         mix(decodeHdr(texelFetch(PreviousRadianceSampler, coord + ivec2(0, 1), 0)), decodeHdr(texelFetch(PreviousRadianceSampler, coord + ivec2(1, 1), 0)), frac.x), 
         frac.y);
 
-    vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), 0.1));
+    vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), 0.25));
     fragColor = encodeHdr(mixedSample.rgb);
     
     // Writing to gl_FragDepth doens't work with sodium. not sure if it worth computing it in a separate pass.

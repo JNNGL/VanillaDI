@@ -1,5 +1,15 @@
 #version 330
 
+// *======= CONFIG =======* //
+
+#define ENABLE_SHADOWS
+
+const bool[] UNIDIRECTIONAL = bool[](
+    true
+);
+
+//////////////////////////////
+
 uniform sampler2D DiffuseSampler;
 uniform sampler2D DiffuseDepthSampler;
 uniform sampler2D NormalSampler;
@@ -74,7 +84,7 @@ float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
 bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance, out bool couldHit) {
     couldHit = false;
 
-    const int samples = 50;
+    const int samples = 10;
 
     vec3 sstwpos = origin;
     float stepSize = min(maxRayDistance / samples, 0.05);
@@ -93,8 +103,6 @@ bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance, out 
             if (hit && length(dswpos - sstwpos) < 0.2) {
                 return true;
             }
-        } else {
-            couldHit = true;
         }
     }
 
@@ -180,7 +188,7 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
                uv3d = traversalOrigin - currentVoxel;
             float dist = traceBlock(uv3d * 8.0, direction, vmask, texelX, texelY, normal, d);
 
-            if (dist != -1) return d;
+            if (dist != -1) return d + dist;
         }
 
         bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
@@ -241,7 +249,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     
     float dist2 = dist * dist;
     float cosine = dot(lightDir, lnorm);
-    float attenuation = max(0.0, sign(cosine)) * (2 * 3.1415926535 * intensity) / (dist2 / abs(cosine * area)) * diff;
+    float attenuation = (UNIDIRECTIONAL[0] ? max(0.0, -sign(cosine)) : 1.0) * (2 * 3.1415926535 * intensity) / (dist2 / abs(cosine * area)) * diff;
 
     light l;
     l.position = pos;
@@ -286,9 +294,26 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
         return vec3(0.0);
     }
 
+#ifdef ENABLE_SHADOWS
     vec3 norm;
     float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), survived.direction, norm, survived.dist);
-    bool shadowed = traceDist != -1.0 && traceDist < survived.dist;
+
+    vec3 position = fragPos + traceDist * survived.direction + vec3(0.5, 1.0, 0.0);
+    vec4 projected = viewProjMat * vec4(position, 1.0);
+    vec3 screenSpace = (projected.xyz / projected.w) * 0.5 + 0.5;
+
+    bool shadowed = traceDist != -1.0;
+    if (clamp(screenSpace, 0.0, 1.0) == screenSpace) {
+        // shadowed = false;
+        // bool couldHit = false;
+        // traceScreenSpaceRay(position, survived.direction, 0.15, couldHit);
+        // if (!couldHit) {
+        //     shadowed = false;
+        // }
+    }
+#else
+    const bool shadowed = false;
+#endif
     if (!shadowed) {
         vec3 radiance = survived.radiance;
         float p = length(radiance);
@@ -318,7 +343,12 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
+    // float traceDist = traceVoxels(origin - offset + vec3(0.5, 1.0, 0.0), direction, normal, 10000);
+
     color.rgb = shade(color.rgb, position, normal, seed);
+
+    // color.rgb = vec3(traceDist / 64.0);
+    // color.rgb = normal * 0.5 + 0.5;
     
     fragColor = encodeHdr(color.rgb);
 }

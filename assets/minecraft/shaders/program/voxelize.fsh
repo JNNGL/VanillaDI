@@ -33,9 +33,10 @@ vec4 encodeFloat1024(float v) {
     return encodeInt(int(v));
 }
 
-bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid) {
+bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out bool force) {
     valid = false;
-    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - vec3(0.5, 0.5, 0.0);
+    force = false;
+    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - vec3(0.5, 0.8, 0.0);
     vec4 homog = viewProjMat * vec4(worldSpace, 1.0);
     vec3 clip = homog.xyz / homog.w;
     if (clamp(clip.xy, -1, 1) != clip.xy) {
@@ -43,6 +44,12 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid) {
     }
 
     float depth = texture(DiffuseDepthSampler, clip.xy * 0.5 + 0.5).r;
+    if (depth > clip.z * 0.5 + 0.5) {
+        valid = true;
+        force = true;
+        return false;
+    }
+
     if (depth == 1.0) {
         return false;
     }
@@ -51,14 +58,17 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid) {
     vec3 backProj = homog.xyz / homog.w;
 
     valid = true;
-    return distance(backProj, worldSpace) < 0.1;
+    return distance(backProj, worldSpace) < 0.15;
 }
 
 void collectRow(inout uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {
     uint shift = 0u;
     for (int i = 0; i < 8; i++) {
-        bool valid;
-        bool present = collectVoxel(blockCoord, i, voxelRow, voxelDepth, valid);
+        bool valid, force;
+        bool present = collectVoxel(blockCoord, i, voxelRow, voxelDepth, valid, force);
+        if (force) {
+            row &= ~(1u << shift);
+        }
         if (valid) {
             row |= (present ? (1u << shift) : 0u);
         }
