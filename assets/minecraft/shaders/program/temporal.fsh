@@ -26,7 +26,7 @@ vec3 decodeHdr(vec4 color) {
 }
 
 vec4 encodeHdr(vec3 color) {
-    float m = max(color.r, max(color.g, color.b));
+    float m = min(max(color.r, max(color.g, color.b)), 255);
     if (m == 0.0) return vec4(0.0);
     if (m < 1.0) return vec4(color, 1.0);
     return vec4(color / m, 1.0 / m);

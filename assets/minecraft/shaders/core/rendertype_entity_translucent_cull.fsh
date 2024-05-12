@@ -9,6 +9,9 @@ uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
 
+uniform mat4 ProjMat;
+uniform mat3 IViewRotMat;
+
 in float vertexDistance;
 in vec4 vertexColor;
 in vec4 lightMapColor;
@@ -51,7 +54,7 @@ vec4 encodeFloat(float v) {
 void main() {
     if (marker == 1.0) {
         int base = index * 11;
-        ivec2 coord = ivec2(gl_FragCoord.xy);
+        ivec2 coord = ivec2(gl_FragCoord.xy) - ivec2(36, 0);
 
         if (coord.x < base && coord.x >= base + 11) {
             discard;
@@ -98,6 +101,42 @@ void main() {
 
         fragColor = vec4(color);
         return;
+    } else if (marker == 2.0) {
+        vec2 pixel = floor(gl_FragCoord.xy);
+        if (pixel.y >= 1.0 || pixel.x >= 36.0) {
+            discard;
+        }
+
+        vec3 pos0 = position0.xyz / position0.w;
+        vec3 pos1 = position2.xyz / position2.w;
+        vec3 pos = pos0 * 0.5 + pos1 * 0.5;
+
+        // Data
+        // 0-15 - modelViewProj
+        // 16-31 - projection
+        // 32-34 - position
+        // 35 - count
+        if (pixel.x < 16) {
+            mat4 mvp = ProjMat * transpose(mat4(IViewRotMat));
+            int index = int(pixel.x);
+            float value = mvp[index / 4][index % 4];
+            fragColor = encodeFloat(value);
+        } else if (pixel.x < 32) {
+            int index = int(pixel.x) - 16;
+            float value = ProjMat[index / 4][index % 4];
+            fragColor = encodeFloat(value);
+        } else if (pixel.x == 35) {
+            fragColor = encodeInt(index);
+        } else {
+            switch (int(pixel.x) - 32) {
+                case 0: fragColor = encodeFloat1024(pos.x); break;
+                case 1: fragColor = encodeFloat1024(pos.y); break;
+                case 2: fragColor = encodeFloat1024(pos.z); break;
+            }
+        }
+        return;
+    } else if (marker > 0.0) {
+        discard;
     }
 
     vec4 color = texture(Sampler0, texCoord0);

@@ -41,6 +41,7 @@ void main() {
 
     vec4 col = texture(Sampler0, UV0);
     marker = col.rg == vec2(195, 76) / 255 ? 1.0 : 0.0;
+    marker = col.rgb == vec3(76, 195, 86) / 255 ? 2.0 : marker;
     type = 0;
     index = int(Color.b * 255);
 
@@ -56,7 +57,7 @@ void main() {
     texCoord0 = UV0;
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 
-    if (marker == 1.0) {
+    if (marker > 0.0) {
         vec3 worldSpace = IViewRotMat * Position;
         switch (gl_VertexID % 4) {
             case 0: position0 = vec4(worldSpace, 1.0); break;

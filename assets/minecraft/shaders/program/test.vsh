@@ -2,7 +2,7 @@
 
 in vec4 Position;
 
-uniform sampler2D DataSampler;
+uniform sampler2D DiffuseSampler;
 
 uniform mat4 ProjMat;
 uniform vec2 InSize;
@@ -12,6 +12,7 @@ flat out mat4 mvpInverse;
 flat out mat4 viewProjMat;
 flat out mat4 projection;
 flat out vec3 offset;
+flat out int lightCount;
 out vec4 near;
 out vec4 far;
 
@@ -34,7 +35,7 @@ float decodeFloat1024(vec3 ivec) {
 void main() {
     mat4 mvp;
     for (int i = 0; i < 16; i++) {
-        vec4 color = texelFetch(DataSampler, ivec2(i, 0), 0);
+        vec4 color = texelFetch(DiffuseSampler, ivec2(i, 0), 0);
         mvp[i / 4][i % 4] = decodeFloat(color.rgb);
     }
 
@@ -42,14 +43,16 @@ void main() {
     mvpInverse = inverse(mvp);
 
     for (int i = 0; i < 16; i++) {
-        vec4 color = texelFetch(DataSampler, ivec2(i + 16, 0), 0);
+        vec4 color = texelFetch(DiffuseSampler, ivec2(i + 16, 0), 0);
         projection[i / 4][i % 4] = decodeFloat(color.rgb);
     }
 
     for (int i = 0; i < 3; i++) {
-        vec4 color = texelFetch(DataSampler, ivec2(32 + i, 0), 0);
+        vec4 color = texelFetch(DiffuseSampler, ivec2(32 + i, 0), 0);
         offset[i] = decodeFloat1024(color.rgb);
     }
+
+    lightCount = decodeInt(texelFetch(DiffuseSampler, ivec2(35, 0), 0).rgb);
 
     offset = fract(offset);
 

@@ -20,6 +20,7 @@ flat in mat4 mvpInverse;
 flat in mat4 viewProjMat;
 flat in mat4 projection;
 flat in vec3 offset;
+flat in int lightCount;
 in vec4 near;
 in vec4 far;
 
@@ -240,7 +241,7 @@ bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 t
 }
 
 light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
-    int base = index * 11;
+    int base = index * 11 + 36;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
     float y = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 1, 0), 0).rgb);
     float z = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 2, 0), 0).rgb);
@@ -292,7 +293,6 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     res.m = 0;
 
     const int M = 8;
-    const int lightCount = 3;
 
     float pdf = 1.0 / lightCount;
 
@@ -343,7 +343,7 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
 }
 
 vec4 encodeHdr(vec3 color) {
-    float m = max(color.r, max(color.g, color.b));
+    float m = min(max(color.r, max(color.g, color.b)), 255);
     if (m == 0.0) return vec4(0.0);
     if (m < 1.0) return vec4(color, 1.0);
     return vec4(color / m, 1.0 / m);
