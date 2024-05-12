@@ -222,10 +222,10 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
     const float intensity = 10;
 
     pointOnLight = position + (random(seed) * width - width * 0.5) * tbn[0] + (random(seed) * height - height * 0.5) * tbn[1];
-    vec3 direction = normalize(pointOnLight - fragPos);
-    
+    area = width * height;
     color *= intensity;
 
+    vec3 direction = normalize(pointOnLight - fragPos);
     return dot(direction, normal) < 0;
 }
 
