@@ -36,19 +36,33 @@ void main() {
     vec4 outPos = ProjMat * vec4(Position.xy, 0.0, 1.0);
     gl_Position = vec4(outPos.xy, 0.2, 1.0);
     
-    mat4 mvp;
+    mat4 projection;
+    mat4 viewMat;
 
     for (int i = 0; i < 16; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(i, 0), 0);
-        mvp[i / 4][i % 4] = decodeFloat(color.rgb);
+        projection[i / 4][i % 4] = decodeFloat(color.rgb);
     }
 
-    invProjViewMat = inverse(mvp);
+    for (int i = 0; i < 16; i++) {
+        vec4 color = texelFetch(DiffuseSampler, ivec2(i + 16, 0), 0);
+        viewMat[i / 4][i % 4] = decodeFloat(color.rgb);
+    }
+
+    invProjViewMat = inverse(projection * viewMat);
 
     for (int i = 0; i < 16; i++) {
         vec4 color = texelFetch(PreviousDataSampler, ivec2(i, 0), 0);
         prevProjViewMat[i / 4][i % 4] = decodeFloat(color.rgb);
     }
+
+    mat4 prevViewMat;
+    for (int i = 0; i < 16; i++) {
+        vec4 color = texelFetch(PreviousDataSampler, ivec2(i + 16, 0), 0);
+        prevViewMat[i / 4][i % 4] = decodeFloat(color.rgb);
+    }
+
+    prevProjViewMat = prevProjViewMat * prevViewMat;
 
     for (int i = 0; i < 3; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(32 + i, 0), 0);

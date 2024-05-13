@@ -22,6 +22,8 @@ uniform float Time;
 in vec2 texCoord;
 flat in mat4 mvpInverse;
 flat in mat4 viewProjMat;
+flat in mat4 projection;
+flat in mat4 viewMat;
 flat in vec3 offset;
 flat in int lightCount;
 in vec4 near;
@@ -81,26 +83,22 @@ float random(inout vec3 v) {
 
 float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
 
-bool traceScreenSpaceRay(vec3 origin, vec3 direction, float maxRayDistance, out bool couldHit) {
-    couldHit = false;
+bool traceScreenSpaceRay(vec3 origin, float depth, vec3 direction, float maxRayDistance, inout vec3 seed) {
+    const int samples = 25;
 
-    const int samples = 10;
+    vec3 sstwpos = origin + direction * 0.01 * length(origin);
 
-    vec3 sstwpos = origin;
-    float stepSize = min(maxRayDistance / samples, 0.05);
-    vec3 sspos;
-    bool found = false;
+    float stepSize = 1. / 50.;
+    origin += direction * random(seed) * stepSize;
+
     for (int ss = 0; ss < samples; ss++) {
         sstwpos += direction * stepSize;
         vec4 ssproj = viewProjMat * vec4(sstwpos, 1.0);
-        sspos = ssproj.xyz / ssproj.w * 0.5 + 0.5;
-        if (clamp(sspos.xy, 0.0, 1.0) == sspos.xy) {
+        vec3 sspos = (ssproj.xyz / ssproj.w) * 0.5 + 0.5;
+        if (clamp(sspos, 0.0, 1.0) == sspos) {
             float ds = texture(DiffuseDepthSampler, sspos.xy).r;
-            vec4 dswproj = mvpInverse * (vec4(sspos.xy, ds, 1.0) * 2.0 - 1.0);
-            vec3 dswpos = dswproj.xyz / dswproj.w;
-            bool hit = ds != 1.0 && ds <= sspos.z;
-            couldHit = couldHit || hit;
-            if (hit && length(dswpos - sstwpos) < 0.2) {
+            float delta = sspos.z - ds;
+            if (ds != 1.0 && delta > 0 && delta < 0.0002) {
                 return true;
             }
         }
@@ -290,7 +288,7 @@ bool updateReservoir(inout reservoir res, int i, float w, float n, inout vec3 se
     return u;
 }
 
-vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
+vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) {
     reservoir res;
     res.wSum = 0;
     res.m = 0;
@@ -322,6 +320,9 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     float traceDist = traceVoxels(traversalOrigin, survived.direction, norm, survived.dist);
 
     bool shadowed = traceDist != -1.0;
+    if (!shadowed) {
+        shadowed = traceScreenSpaceRay(fragPos, depth, survived.direction, survived.dist, seed);
+    }
 #else
     const bool shadowed = false;
 #endif
@@ -361,7 +362,7 @@ void main() {
 
     // float traceDist = traceVoxels(origin - offset + VOXELIZATION_OFFSET, direction, normal, 10000);
 
-    color.rgb = shade(color.rgb, position, normal, seed);
+    color.rgb = shade(color.rgb, position, depth, normal, seed);
 
     // color.rgb = vec3(traceDist / 64.0);
     // color.rgb = normal * 0.5 + 0.5;

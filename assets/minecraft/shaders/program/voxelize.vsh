@@ -44,15 +44,21 @@ const vec4[] corners = vec4[](
 );
 
 void main() {
-    mat4 mvp;
+    mat4 projection;
+    mat4 viewMat;
 
     for (int i = 0; i < 16; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(i, 0), 0);
-        mvp[i / 4][i % 4] = decodeFloat(color.rgb);
+        projection[i / 4][i % 4] = decodeFloat(color.rgb);
     }
 
-    viewProjMat = mvp;
-    mvpInverse = inverse(mvp);
+    for (int i = 0; i < 16; i++) {
+        vec4 color = texelFetch(DiffuseSampler, ivec2(i + 16, 0), 0);
+        viewMat[i / 4][i % 4] = decodeFloat(color.rgb);
+    }
+
+    viewProjMat = projection * viewMat;
+    mvpInverse = inverse(viewProjMat);
 
     vec4 near = mvpInverse * vec4(0, 0, -1, 1);
     vec4 far = mvpInverse * vec4(0, 0, 1, 1);

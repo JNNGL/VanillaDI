@@ -41,7 +41,7 @@ vec4 encodeFloat1024(float v) {
 bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out bool force) {
     valid = false;
     force = false;
-    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - VOXELIZATION_OFFSET - direction * (1.0 / 16.0);
+    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - VOXELIZATION_OFFSET - direction * (1.25 / 16.0);
     vec4 homog = viewProjMat * vec4(worldSpace, 1.0);
     vec3 clip = homog.xyz / homog.w;
     if (clamp(clip.xy, -1, 1) != clip.xy) {
@@ -63,7 +63,7 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out boo
     vec3 backProj = homog.xyz / homog.w;
 
     valid = true;
-    return distance(backProj, worldSpace) < 0.15;
+    return distance(backProj, worldSpace) < depth * 0.15;
 }
 
 void collectRow(inout uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {

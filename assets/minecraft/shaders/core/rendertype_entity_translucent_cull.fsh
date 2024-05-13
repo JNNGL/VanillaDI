@@ -117,13 +117,13 @@ void main() {
         // 32-34 - position
         // 35 - count
         if (pixel.x < 16) {
-            mat4 mvp = ProjMat * transpose(mat4(IViewRotMat));
+            mat4 mvp = ProjMat;
             int index = int(pixel.x);
             float value = mvp[index / 4][index % 4];
             fragColor = encodeFloat(value);
         } else if (pixel.x < 32) {
             int index = int(pixel.x) - 16;
-            float value = ProjMat[index / 4][index % 4];
+            float value = transpose(mat4(IViewRotMat))[index / 4][index % 4];
             fragColor = encodeFloat(value);
         } else if (pixel.x == 35) {
             fragColor = encodeInt(index);

@@ -22,14 +22,20 @@ float decodeFloat(vec3 ivec) {
 }
 
 void main() {
-    mat4 mvp;
+    mat4 projection;
+    mat4 viewMat;
 
     for (int i = 0; i < 16; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(i, 0), 0);
-        mvp[i / 4][i % 4] = decodeFloat(color.rgb);
+        projection[i / 4][i % 4] = decodeFloat(color.rgb);
     }
 
-    mvpInverse = inverse(mvp);
+    for (int i = 0; i < 16; i++) {
+        vec4 color = texelFetch(DiffuseSampler, ivec2(i + 16, 0), 0);
+        viewMat[i / 4][i % 4] = decodeFloat(color.rgb);
+    }
+
+    mvpInverse = inverse(projection * viewMat);
 
     vec4 outPos = ProjMat * vec4(Position.xy, 0.0, 1.0);
     gl_Position = vec4(outPos.xy, 0.2, 1.0);
