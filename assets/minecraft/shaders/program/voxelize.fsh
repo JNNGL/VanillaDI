@@ -16,6 +16,7 @@ flat in vec3 offset;
 flat in vec3 position;
 flat in vec3 prevPosition;
 flat in int lightCount;
+flat in int frame;
 
 out vec4 fragColor;
 
@@ -81,11 +82,12 @@ void collectRow(inout uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) 
 
 void main() {
     ivec2 coord = ivec2(gl_FragCoord.xy);
-    if (coord.y == 0 && coord.x < 3) {
+    if (coord.y == 0 && coord.x < 4) {
         switch (coord.x) {
             case 0: fragColor = encodeFloat1024(position.x); break;
             case 1: fragColor = encodeFloat1024(position.y); break;
             case 2: fragColor = encodeFloat1024(position.z); break;
+            case 3: fragColor = encodeInt(frame + 1); break;
         }
         return;
     }
@@ -116,7 +118,7 @@ void main() {
         row3 = uint(cache[3] * 255);
     }
 
-    if (lightCount > 0) {
+    if (lightCount > 0 && frame == 0) {
         collectRow(row0, blockCoord, voxelRowOffset, voxelDepth);
         collectRow(row1, blockCoord, voxelRowOffset + 1, voxelDepth);
         collectRow(row2, blockCoord, voxelRowOffset + 2, voxelDepth);

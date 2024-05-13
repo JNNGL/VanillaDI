@@ -1,5 +1,7 @@
 #version 150
 
+#define SKIP_FRAMES 5
+
 in vec4 Position;
 
 uniform sampler2D DiffuseSampler;
@@ -15,6 +17,7 @@ flat out vec3 offset;
 flat out vec3 position;
 flat out vec3 prevPosition;
 flat out int lightCount;
+flat out int frame;
 
 int decodeInt(vec3 ivec) {
     ivec *= 255.0;
@@ -62,6 +65,8 @@ void main() {
 
     offset = fract(position);
     lightCount = decodeInt(texelFetch(DiffuseSampler, ivec2(35, 0), 0).rgb);
+    frame = max(decodeInt(texelFetch(VoxelCacheSampler, ivec2(3, 0), 0).rgb), 0);
+    if (frame >= SKIP_FRAMES) frame = 0;
 
     vec4 outPos = corners[gl_VertexID];
     gl_Position = outPos;
