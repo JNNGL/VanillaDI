@@ -3,6 +3,10 @@
 // *======= CONFIG =======* //
 
 #define ENABLE_SHADOWS
+#define LIGHT_SELECTIONS 8
+
+#define VOXELIZATION_OFFSET (vec3(0.5, 1.0, 0.0))
+#define MIN_TRACE_DISTANCE 0.01
 
 //////////////////////////////
 
@@ -220,7 +224,7 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
                inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
     const float width = 1.5;
     const float height = 1.0;
-    const float intensity = 10;
+    const float intensity = 100;
 
     pointOnLight = position + (random(seed) * width - width * 0.5) * tbn[0] + (random(seed) * height - height * 0.5) * tbn[1];
     area = width * height;
@@ -292,7 +296,7 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     res.wSum = 0;
     res.m = 0;
 
-    const int M = 8;
+    const int M = LIGHT_SELECTIONS;
 
     float pdf = 1.0 / lightCount;
 
@@ -300,7 +304,7 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     survived.radiance = vec3(0.0);
 
     for (int i = 0; i < M; i++) {
-        int index = int(floor(random(seed) * (lightCount - 0.001)));
+        int index = int(floor(random(seed) * lightCount));
         light l = sampleLight(index, fragPos, normal, seed);
         float w = length(l.radiance) / pdf;
         if (updateReservoir(res, index, w, 1, seed))
@@ -312,22 +316,13 @@ vec3 shade(vec3 color, vec3 fragPos, vec3 normal, inout vec3 seed) {
     }
 
 #ifdef ENABLE_SHADOWS
-    vec3 norm;
-    float traceDist = traceVoxels(fragPos - offset + vec3(0.5, 1.0, 0.0), survived.direction, norm, survived.dist);
+    float minDistance = MIN_TRACE_DISTANCE * length(fragPos);
+    vec3 traversalOrigin = fragPos - offset + VOXELIZATION_OFFSET + survived.direction * minDistance;
 
-    vec3 position = fragPos + traceDist * survived.direction + vec3(0.5, 1.0, 0.0);
-    vec4 projected = viewProjMat * vec4(position, 1.0);
-    vec3 screenSpace = (projected.xyz / projected.w) * 0.5 + 0.5;
+    vec3 norm;
+    float traceDist = traceVoxels(traversalOrigin, survived.direction, norm, survived.dist);
 
     bool shadowed = traceDist != -1.0;
-    if (clamp(screenSpace, 0.0, 1.0) == screenSpace) {
-        // shadowed = false;
-        // bool couldHit = false;
-        // traceScreenSpaceRay(position, survived.direction, 0.15, couldHit);
-        // if (!couldHit) {
-        //     shadowed = false;
-        // }
-    }
 #else
     const bool shadowed = false;
 #endif
@@ -360,7 +355,7 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
-    // float traceDist = traceVoxels(origin - offset + vec3(0.5, 1.0, 0.0), direction, normal, 10000);
+    // float traceDist = traceVoxels(origin - offset + VOXELIZATION_OFFSET, direction, normal, 10000);
 
     color.rgb = shade(color.rgb, position, normal, seed);
 
