@@ -18,6 +18,7 @@ flat out vec3 position;
 flat out vec3 prevPosition;
 flat out int lightCount;
 flat out int frame;
+flat out vec3 direction;
 
 int decodeInt(vec3 ivec) {
     ivec *= 255.0;
@@ -52,6 +53,10 @@ void main() {
 
     viewProjMat = mvp;
     mvpInverse = inverse(mvp);
+
+    vec4 near = mvpInverse * vec4(0, 0, -1, 1);
+    vec4 far = mvpInverse * vec4(0, 0, 1, 1);
+    direction = normalize(far.xyz / far.w - near.xyz / near.w);
 
     for (int i = 0; i < 3; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(32 + i, 0), 0);

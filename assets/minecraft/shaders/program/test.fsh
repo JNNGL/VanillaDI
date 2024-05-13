@@ -6,7 +6,7 @@
 #define LIGHT_SELECTIONS 8
 
 #define VOXELIZATION_OFFSET (vec3(0.5, 1.0, 0.0))
-#define MIN_TRACE_DISTANCE 0.01
+#define MIN_TRACE_DISTANCE 0.015
 
 //////////////////////////////
 
@@ -22,7 +22,6 @@ uniform float Time;
 in vec2 texCoord;
 flat in mat4 mvpInverse;
 flat in mat4 viewProjMat;
-flat in mat4 projection;
 flat in vec3 offset;
 flat in int lightCount;
 in vec4 near;

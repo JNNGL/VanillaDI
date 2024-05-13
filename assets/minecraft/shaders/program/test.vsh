@@ -10,7 +10,6 @@ uniform vec2 InSize;
 out vec2 texCoord;
 flat out mat4 mvpInverse;
 flat out mat4 viewProjMat;
-flat out mat4 projection;
 flat out vec3 offset;
 flat out int lightCount;
 out vec4 near;
@@ -41,11 +40,6 @@ void main() {
 
     viewProjMat = mvp;
     mvpInverse = inverse(mvp);
-
-    for (int i = 0; i < 16; i++) {
-        vec4 color = texelFetch(DiffuseSampler, ivec2(i + 16, 0), 0);
-        projection[i / 4][i % 4] = decodeFloat(color.rgb);
-    }
 
     for (int i = 0; i < 3; i++) {
         vec4 color = texelFetch(DiffuseSampler, ivec2(32 + i, 0), 0);
