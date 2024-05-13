@@ -1,4 +1,4 @@
-#version 420
+#version 330
 
 uniform sampler2D RadianceSampler;
 uniform sampler2D DiffuseDepthSampler;
@@ -65,8 +65,9 @@ void main() {
         return;
     }
 
-    vec4 prevDepthData = texture(PreviousDepthSampler, screenSpace.xy);
-    float prevDepth = uintBitsToFloat(packUnorm4x8(prevDepthData));
+    uvec4 prevDepthData = uvec4(texture(PreviousDepthSampler, screenSpace.xy) * 255.0);
+    uint prevDepthBits = prevDepthData.r << 24 | prevDepthData.g << 16 | prevDepthData.b << 8 | prevDepthData.a;
+    float prevDepth = uintBitsToFloat(prevDepthBits);
     if (abs(screenSpace.z - prevDepth) > 0.003 * screenSpace.z) {
         return;
     }
