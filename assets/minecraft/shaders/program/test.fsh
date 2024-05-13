@@ -345,6 +345,11 @@ vec4 encodeHdr(vec3 color) {
 }
 
 void main() {
+    if (lightCount == 0) {
+        fragColor = encodeHdr(vec3(0.0));
+        return;
+    }
+
     float depth = texture(DiffuseDepthSampler, texCoord).r;
     vec3 position = reconstructPosition(texCoord, depth);
     vec3 normal = normalize(texture(NormalSampler, texCoord).rgb * 2.0 - 1.0);

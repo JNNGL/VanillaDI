@@ -15,6 +15,7 @@ flat in mat4 mvpInverse;
 flat in vec3 offset;
 flat in vec3 position;
 flat in vec3 prevPosition;
+flat in int lightCount;
 
 out vec4 fragColor;
 
@@ -115,10 +116,12 @@ void main() {
         row3 = uint(cache[3] * 255);
     }
 
-    collectRow(row0, blockCoord, voxelRowOffset, voxelDepth);
-    collectRow(row1, blockCoord, voxelRowOffset + 1, voxelDepth);
-    collectRow(row2, blockCoord, voxelRowOffset + 2, voxelDepth);
-    collectRow(row3, blockCoord, voxelRowOffset + 3, voxelDepth);
+    if (lightCount > 0) {
+        collectRow(row0, blockCoord, voxelRowOffset, voxelDepth);
+        collectRow(row1, blockCoord, voxelRowOffset + 1, voxelDepth);
+        collectRow(row2, blockCoord, voxelRowOffset + 2, voxelDepth);
+        collectRow(row3, blockCoord, voxelRowOffset + 3, voxelDepth);
+    }
 
     fragColor = vec4(float(row0), float(row1), float(row2), float(row3)) / 255.;
 }

@@ -14,6 +14,7 @@ flat out mat4 mvpInverse;
 flat out vec3 offset;
 flat out vec3 position;
 flat out vec3 prevPosition;
+flat out int lightCount;
 
 int decodeInt(vec3 ivec) {
     ivec *= 255.0;
@@ -60,6 +61,7 @@ void main() {
     }
 
     offset = fract(position);
+    lightCount = decodeInt(texelFetch(DiffuseSampler, ivec2(35, 0), 0).rgb);
 
     vec4 outPos = corners[gl_VertexID];
     gl_Position = outPos;
