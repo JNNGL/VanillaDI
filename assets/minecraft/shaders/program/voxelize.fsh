@@ -36,7 +36,7 @@ vec4 encodeFloat1024(float v) {
 bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out bool force) {
     valid = false;
     force = false;
-    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - vec3(0.5, 0.8, 0.0);
+    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - vec3(0.5, 1.0, 0.0);
     vec4 homog = viewProjMat * vec4(worldSpace, 1.0);
     vec3 clip = homog.xyz / homog.w;
     if (clamp(clip.xy, -1, 1) != clip.xy) {
