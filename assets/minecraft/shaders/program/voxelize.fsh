@@ -48,7 +48,7 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out boo
     }
 
     vec3 normal = normalize(texture(NormalSampler, clip.xy * 0.5 + 0.5).rgb * 2.0 - 1.0);
-    worldSpace += normal * (0.5 / 16.0);
+    worldSpace += normal * (1.0 / 16.0);
     
     homog = viewProjMat * vec4(worldSpace, 1.0);
     clip = homog.xyz / homog.w;
