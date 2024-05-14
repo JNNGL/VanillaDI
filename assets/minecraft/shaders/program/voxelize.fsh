@@ -17,7 +17,6 @@ flat in vec3 position;
 flat in vec3 prevPosition;
 flat in int lightCount;
 flat in int frame;
-flat in vec3 direction;
 
 out vec4 fragColor;
 
@@ -41,9 +40,18 @@ vec4 encodeFloat1024(float v) {
 bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out bool force) {
     valid = false;
     force = false;
-    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - VOXELIZATION_OFFSET - direction * (1.0 / 16.0);
+    vec3 worldSpace = vec3(blockCoord) + (vec3(x, y, z) + 0.5) / 8 + offset - VOXELIZATION_OFFSET;
     vec4 homog = viewProjMat * vec4(worldSpace, 1.0);
     vec3 clip = homog.xyz / homog.w;
+    if (clamp(clip.xy, -1, 1) != clip.xy) {
+        return false;
+    }
+
+    vec3 normal = normalize(texture(NormalSampler, clip.xy * 0.5 + 0.5).rgb * 2.0 - 1.0);
+    worldSpace += normal * (1.0 / 16.0);
+    
+    homog = viewProjMat * vec4(worldSpace, 1.0);
+    clip = homog.xyz / homog.w;
     if (clamp(clip.xy, -1, 1) != clip.xy) {
         return false;
     }
