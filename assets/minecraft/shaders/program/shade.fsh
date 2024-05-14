@@ -221,7 +221,7 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
                inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
     const float width = 1.5;
     const float height = 1.0;
-    const float intensity = 100;
+    const float intensity = 30;
 
     pointOnLight = position + (random(seed) * width - width * 0.5) * tbn[0] + (random(seed) * height - height * 0.5) * tbn[1];
     area = width * height;
@@ -231,8 +231,8 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
     return dot(direction, normal) < 0;
 }
 
-bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
-                        inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
+bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
+                        inout vec3 normal, out float area, inout float pdf, inout vec3 seed) {
     switch (type) {
         case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
         // Add your custom light here
@@ -258,9 +258,9 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     vec3 bitangent = normalize(vec3(bx, by, bz));
     mat3 tbn = mat3(tangent, bitangent, normalize(cross(tangent, bitangent)));
 
-    float area;
+    float area, pdf = 1.0;
     vec3 lnorm = tbn[2], pos = vec3(x, y, z);
-    bool valid = samplePointOnLight(0, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, seed);
+    bool valid = samplePointOnLight(0, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, pdf, seed);
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
@@ -268,7 +268,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     
     float dist2 = dist * dist;
     float cosine = dot(lightDir, lnorm);
-    float attenuation = float(valid) * (2 * 3.1415926535) / (dist2 / abs(cosine * area)) * diff;
+    float attenuation = float(valid) * (2 * 3.1415926535 * pdf) / (dist2 / abs(cosine * area)) * diff;
 
     light l;
     l.position = pos;
