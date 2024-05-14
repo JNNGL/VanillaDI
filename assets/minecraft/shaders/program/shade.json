@@ -4,8 +4,8 @@
         "srcrgb": "one",
         "dstrgb": "zero"
     },
-    "vertex": "test",
-    "fragment": "test",
+    "vertex": "shade",
+    "fragment": "shade",
     "attributes": [ "Position" ],
     "samplers": [
         { "name": "DiffuseSampler" },

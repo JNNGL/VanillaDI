@@ -55,7 +55,7 @@
             "outtarget": "voxelLod"
         },
         {
-            "name": "test",
+            "name": "shade",
             "intarget": "minecraft:main",
             "outtarget": "swap",
             "auxtargets": [
