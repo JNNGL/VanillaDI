@@ -8,6 +8,8 @@
 #define VOXELIZATION_OFFSET (vec3(0.5, 1.0, 0.0))
 #define MIN_TRACE_DISTANCE 0.015
 
+#define ENABLE_SSRT
+
 //////////////////////////////
 
 uniform sampler2D DiffuseSampler;
@@ -81,8 +83,6 @@ float random(inout vec3 v) {
     return floatConstruct(hash(floatBitsToUint(v += 1.0)));
 }
 
-float distanceSquared(vec2 a, vec2 b) { a -= b; return dot(a, a); }
-
 bool traceScreenSpaceRay(vec3 origin, float depth, vec3 direction, float maxRayDistance, inout vec3 seed) {
     const int samples = 25;
 
@@ -95,12 +95,11 @@ bool traceScreenSpaceRay(vec3 origin, float depth, vec3 direction, float maxRayD
         sstwpos += direction * stepSize;
         vec4 ssproj = viewProjMat * vec4(sstwpos, 1.0);
         vec3 sspos = (ssproj.xyz / ssproj.w) * 0.5 + 0.5;
-        if (clamp(sspos, 0.0, 1.0) == sspos) {
-            float ds = texture(DiffuseDepthSampler, sspos.xy).r;
-            float delta = sspos.z - ds;
-            if (ds != 1.0 && delta > 0 && delta < 0.0002) {
-                return true;
-            }
+        if (clamp(sspos, 0.0, 1.0) != sspos) break;
+        float ds = texture(DiffuseDepthSampler, sspos.xy).r;
+        float delta = sspos.z - ds;
+        if (ds != 1.0 && delta > 0 && delta < 0.02 * (1.0 - depth)) {
+            return true;
         }
     }
 
@@ -292,9 +291,11 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
     float traceDist = traceVoxels(traversalOrigin, survived.direction, norm, survived.dist);
 
     bool shadowed = traceDist != -1.0;
+#ifdef ENABLE_SSRT
     if (!shadowed) {
         shadowed = traceScreenSpaceRay(fragPos, depth, survived.direction, survived.dist, seed);
     }
+#endif
 #else
     const bool shadowed = false;
 #endif
