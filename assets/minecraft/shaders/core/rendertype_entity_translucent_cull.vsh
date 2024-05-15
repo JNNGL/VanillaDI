@@ -35,6 +35,8 @@ out vec4 position1;
 out vec4 position2;
 out vec4 position3;
 flat out int index;
+flat out vec3 lightColor;
+flat out float intensity;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
@@ -58,6 +60,12 @@ void main() {
     normal = ProjMat * ModelViewMat * vec4(Normal, 0.0);
 
     if (marker > 0.0) {
+        int paletteIndex = int(Color.g * 255);
+        if (paletteIndex == 0) lightColor = vec3(1.0);
+        else lightColor = texture(Sampler0, UV0 + vec2(paletteIndex % 16, paletteIndex / 16) / textureSize(Sampler0, 0)).rgb;
+
+        intensity = Color.r;
+
         vec3 worldSpace = IViewRotMat * Position;
         switch (gl_VertexID % 4) {
             case 0: position0 = vec4(worldSpace, 1.0); break;

@@ -191,11 +191,9 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
                inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
     const float width = 1.5;
     const float height = 1.0;
-    const float intensity = 30;
 
     pointOnLight = position + (random(seed) * width - width * 0.5) * tbn[0] + (random(seed) * height - height * 0.5) * tbn[1];
     area = width * height;
-    color *= intensity;
 
     vec3 direction = normalize(pointOnLight - fragPos);
     return dot(direction, normal) < 0;
@@ -223,6 +221,9 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     float by = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 7, 0), 0).rgb);
     float bz = decodeFloat(texelFetch(DiffuseSampler, ivec2(base + 8, 0), 0).rgb);
     vec3 c = texelFetch(DiffuseSampler, ivec2(base + 9, 0), 0).rgb;
+    vec3 var = texelFetch(DiffuseSampler, ivec2(base + 10, 0), 0).rgb;
+    
+    float intensity = var.r * 100;
 
     vec3 tangent = normalize(vec3(tx, ty, tz));
     vec3 bitangent = normalize(vec3(bx, by, bz));
@@ -244,7 +245,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     l.position = pos;
     l.normal = lnorm;
     l.direction = lightDir;
-    l.radiance = c * attenuation;
+    l.radiance = c * intensity * attenuation;
     l.dist = dist;
 
     return l;

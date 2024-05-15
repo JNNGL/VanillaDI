@@ -25,6 +25,8 @@ in vec4 position1;
 in vec4 position2;
 in vec4 position3;
 flat in int index;
+flat in vec3 lightColor;
+flat in float intensity;
 
 out vec4 fragColor;
 
@@ -91,8 +93,8 @@ void main() {
             case 6: color = encodeFloat(bitangent.x); break;
             case 7: color = encodeFloat(bitangent.y); break;
             case 8: color = encodeFloat(bitangent.z); break;
-            case 9: color = index == 0 ? vec4(1, 0.25, 0.25, 1.0) : (index == 1 ? vec4(0.25, 0.25, 1.0, 1.0) : vec4(0.25, 1.0, 0.25, 1.0)); break;
-            case 10: color = vec4(0.0, 0.0, 0.0, 1.0); break;
+            case 9: color = vec4(lightColor, 1.0); break;
+            case 10: color = vec4(intensity, 0.0, 0.0, 1.0); break;
         }
 
         if (color.a == 0.0) {
