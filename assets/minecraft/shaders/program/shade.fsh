@@ -106,7 +106,7 @@ bool traceScreenSpaceRay(vec3 origin, float depth, vec3 direction, float maxRayD
     return false;
 }
 
-bool traceBlock(vec3 rayPos, vec3 rayDir, vec3 mask, int texelX, int texelY, inout vec3 normal, float dist) {
+bool traceBlock(vec3 rayPos, vec3 rayDir, vec3 mask, int texelX, int texelY, float dist) {
     rayPos = clamp(rayPos, vec3(0.0001), vec3(7.9999));
     vec3 mapPos = floor(rayPos);
     vec3 raySign = sign(rayDir);
@@ -131,8 +131,7 @@ bool traceBlock(vec3 rayPos, vec3 rayDir, vec3 mask, int texelX, int texelY, ino
     return false;
 }
 
-float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
-    normal = vec3(0.0);
+float traceVoxels(vec3 origin, vec3 direction, float maxDist) {
     vec3 traversalOrigin = origin;
     vec3 currentVoxel = floor(traversalOrigin);
     vec3 raySign = sign(direction);
@@ -161,7 +160,7 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
             vec3 u = p - currentVoxel;
             if (currentVoxel == floor(traversalOrigin))
                u = traversalOrigin - currentVoxel;
-            bool hit = traceBlock(u * 8.0, direction, mask, texelX, texelY, normal, d);
+            bool hit = traceBlock(u * 8.0, direction, mask, texelX, texelY, d);
             if (hit) return d;
         }
 
@@ -287,8 +286,7 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
     float minDistance = MIN_TRACE_DISTANCE * length(fragPos);
     vec3 traversalOrigin = fragPos - offset + VOXELIZATION_OFFSET + survived.direction * minDistance;
 
-    vec3 norm;
-    float traceDist = traceVoxels(traversalOrigin, survived.direction, norm, survived.dist);
+    float traceDist = traceVoxels(traversalOrigin, survived.direction, survived.dist);
 
     bool shadowed = traceDist != -1.0;
 #ifdef ENABLE_SSRT
@@ -333,12 +331,7 @@ void main() {
     vec3 origin = near.xyz / near.w;
     vec3 direction = normalize(far.xyz / far.w - origin);
 
-    // float traceDist = traceVoxels(origin - offset + VOXELIZATION_OFFSET, direction, normal, 10000);
-
     color.rgb = shade(color.rgb, position, depth, normal, seed);
-
-    // color.rgb = vec3(traceDist / 64.0);
-    // color.rgb = normal * 0.5 + 0.5;
     
     fragColor = encodeHdr(color.rgb);
 }
