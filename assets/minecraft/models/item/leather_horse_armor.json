@@ -4,7 +4,7 @@
       "layer0": "minecraft:item/leather_horse_armor"
     },
     "overrides": [
-        {"predicate": {"custom_model_data": 1}, "model": "custom/point_light"},
+        {"predicate": {"custom_model_data": 1}, "model": "custom/light0"},
         {"predicate": {"custom_model_data": 2}, "model": "custom/marker"}
     ]
   }

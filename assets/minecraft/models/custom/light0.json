@@ -1,6 +1,6 @@
 {
     "parent": "minecraft:custom/light",
     "textures": {
-      "layer0": "minecraft:custom/point_light"
+      "layer0": "minecraft:custom/light0"
     }
   }
