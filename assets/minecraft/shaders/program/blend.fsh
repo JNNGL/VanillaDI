@@ -5,8 +5,6 @@ uniform sampler2D LightSampler;
 
 uniform vec2 InSize;
 
-in vec2 texCoord;
-
 out vec4 fragColor;
 
 vec3 acesFilm(vec3 x) {
@@ -19,8 +17,9 @@ vec3 decodeHdr(vec4 color) {
 }
 
 void main() {
-    vec4 color = texture(DiffuseSampler, texCoord);
-    vec3 light = decodeHdr(texture(LightSampler, texCoord));
+    ivec2 coord = max(ivec2(gl_FragCoord.xy), ivec2(0, 1));
+    vec4 color = texelFetch(DiffuseSampler, coord, 0);
+    vec3 light = decodeHdr(texelFetch(LightSampler, coord, 0));
     color.rgb *= (1.0 + light);
     color.rgb = acesFilm(color.rgb);
     fragColor = color;

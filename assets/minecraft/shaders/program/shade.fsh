@@ -316,7 +316,7 @@ vec4 encodeHdr(vec3 color) {
 }
 
 void main() {
-    if (lightCount == 0) {
+    if (gl_FragCoord.y == 0 || lightCount == 0) {
         fragColor = encodeHdr(vec3(0.0));
         return;
     }
