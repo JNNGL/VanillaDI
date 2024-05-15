@@ -107,43 +107,29 @@ bool traceScreenSpaceRay(vec3 origin, float depth, vec3 direction, float maxRayD
     return false;
 }
 
-float traceBlock(vec3 rayPos, vec3 rayDir, vec3 _mask, int texelX, int texelY, inout vec3 normal, float dist) {
+bool traceBlock(vec3 rayPos, vec3 rayDir, vec3 mask, int texelX, int texelY, inout vec3 normal, float dist) {
     rayPos = clamp(rayPos, vec3(0.0001), vec3(7.9999));
     vec3 mapPos = floor(rayPos);
     vec3 raySign = sign(rayDir);
-    vec3 deltaDist = 1.0/rayDir;
+    vec3 deltaDist = 1.0 / rayDir;
     vec3 sideDist = ((mapPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
-    vec3 mask = _mask;
-    int j = 0;
     
-    while (mapPos.x <= 7.0 && mapPos.x >= 0.0 && mapPos.y <= 7.0 && mapPos.y >= 0.0 && mapPos.z <= 7.0 && mapPos.z >= 0.0) {
+    for (int j = 0; j < 24; j++) {
+        if (clamp(mapPos, 0.0, 7.0) != mapPos) break;
+
         ivec3 voxel = ivec3(mapPos);
         int index = (voxel.y >= 4 ? 1 : 0) + voxel.z * 2;
         uvec4 s = uvec4(texelFetch(VoxelSampler, ivec2(texelX * 16 + index, texelY), 0) * 255);
         if ((s[voxel.y % 4] & (1u << uint(voxel.x))) != 0u) {
-            normal = mask;
-            vec3 mini = ((mapPos - rayPos) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
-            float d = max(mini.x, max(mini.y, mini.z));
-            float totalDist = d + dist;
-            // if (totalDist >= 1.0) 
-            return d;
+            return true;
         }
             
-        bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
-        bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
-        bvec3 bmask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
-        bmask.z = bmask.z || !any(bmask);
-        mask      = vec3(bmask);
-        mapPos   += mask * raySign;
+        mask = vec3(lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy)));
+        mapPos += mask * raySign;
         sideDist += mask * raySign * deltaDist;
-
-        j++;
-        if (j >= 24) {
-            break;
-        }
     }
     
-    return -1.0;
+    return false;
 }
 
 float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
@@ -153,12 +139,7 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
     vec3 raySign = sign(direction);
     vec3 deltaDist = 1.0 / direction;
     vec3 sideDist = ((currentVoxel - traversalOrigin) + 0.5 + raySign * 0.5) * deltaDist;
-
-    bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
-    bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
-    bvec3 mask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
-    mask.z = mask.z || !any(mask);
-    vec3 vmask = vec3(mask);
+    vec3 mask = vec3(lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy)));
 
     for (int i = 0; i < 32; i++) {
         vec3 relativeBlock = floor(currentVoxel);
@@ -170,33 +151,24 @@ float traceVoxels(vec3 origin, vec3 direction, out vec3 normal, float maxDist) {
         int texelY = linearIndex / 128;
         int texelX = linearIndex % 128;
         
-        vec3 mini = ((currentVoxel - traversalOrigin) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
-        float d = max(mini.x, max(mini.y, mini.z));
+        vec3 s = ((currentVoxel - traversalOrigin) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
+        float d = max(s.x, max(s.y, s.z));
         if (d > maxDist) {
             return -1.0;
         }
 
         if (texelFetch(VoxelLodSampler, ivec2(texelX, texelY), 0) != vec4(0.0)) {
-            // normal = vmask;
-            // return float(texelX) / 128;
-            //return 1.0;
-            vec3 intersect = traversalOrigin + direction * d;
-            vec3 uv3d = intersect - currentVoxel;
+            vec3 p = traversalOrigin + direction * d;
+            vec3 u = p - currentVoxel;
             if (currentVoxel == floor(traversalOrigin))
-               uv3d = traversalOrigin - currentVoxel;
-            float dist = traceBlock(uv3d * 8.0, direction, vmask, texelX, texelY, normal, d);
-
-            if (dist != -1) return d + dist;
+               u = traversalOrigin - currentVoxel;
+            bool hit = traceBlock(u * 8.0, direction, mask, texelX, texelY, normal, d);
+            if (hit) return d;
         }
 
-        bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
-        bvec3 b2 = lessThanEqual(sideDist.xyz, sideDist.zxy);
-        bvec3 mask = bvec3(b1.x && b2.x, b1.y && b2.y, b1.z && b2.z);
-        mask.z = mask.z || !any(mask);
-        vmask = vec3(mask);
-        
-        currentVoxel += vmask * raySign;
-        sideDist += vmask * raySign * deltaDist;
+        mask = vec3(lessThanEqual(sideDist.xyz, min(sideDist.yzx, sideDist.zxy)));
+        currentVoxel += mask * raySign;
+        sideDist += mask * raySign * deltaDist;
     }
 
     return -1.0;
