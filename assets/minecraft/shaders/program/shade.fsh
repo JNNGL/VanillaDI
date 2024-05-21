@@ -239,13 +239,14 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     
     float dist2 = dist * dist;
     float cosine = dot(lightDir, lnorm);
-    float attenuation = float(valid) * (2 * 3.1415926535 * pdf) / (dist2 / abs(cosine * area)) * diff;
+
+    float attenuation = float(valid) * (2 * 3.1415926535 * pdf * intensity * diff) * (abs(cosine * area) / dist2);
 
     light l;
     l.position = pos;
     l.normal = lnorm;
     l.direction = lightDir;
-    l.radiance = c * intensity * attenuation;
+    l.radiance = c * attenuation;
     l.dist = dist;
 
     return l;
