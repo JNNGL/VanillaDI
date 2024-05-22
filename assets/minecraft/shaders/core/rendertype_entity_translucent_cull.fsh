@@ -114,8 +114,8 @@ void main() {
         vec3 pos = pos0 * 0.5 + pos1 * 0.5;
 
         // Data
-        // 0-15 - modelViewProj
-        // 16-31 - projection
+        // 0-15 - projection matrix
+        // 16-31 - view matrix
         // 32-34 - position
         // 35 - count
         if (pixel.x < 16) {
