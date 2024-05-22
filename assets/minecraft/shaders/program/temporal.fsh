@@ -27,7 +27,7 @@ vec3 decodeHdr(vec4 color) {
 
 vec4 encodeHdr(vec3 color) {
     float m = min(max(color.r, max(color.g, color.b)), 255);
-    if (m == 0.0) return vec4(0.0);
+    if (m <= 0.0) return vec4(0.0);
     if (m < 1.0) return vec4(color, 1.0);
     return vec4(color / m, 1.0 / m);
 }
@@ -68,7 +68,7 @@ void main() {
     uvec4 prevDepthData = uvec4(texture(PreviousDepthSampler, screenSpace.xy) * 255.0);
     uint prevDepthBits = prevDepthData.r << 24 | prevDepthData.g << 16 | prevDepthData.b << 8 | prevDepthData.a;
     float prevDepth = uintBitsToFloat(prevDepthBits);
-    if (abs(screenSpace.z - prevDepth) > 0.003 * screenSpace.z) {
+    if (abs(screenSpace.z - prevDepth) > 0.001 * screenSpace.z) {
         return;
     }
 
@@ -80,8 +80,9 @@ void main() {
         mix(decodeHdr(texelFetch(PreviousRadianceSampler, coord, 0)), decodeHdr(texelFetch(PreviousRadianceSampler, coord + ivec2(1, 0), 0)), frac.x), 
         mix(decodeHdr(texelFetch(PreviousRadianceSampler, coord + ivec2(0, 1), 0)), decodeHdr(texelFetch(PreviousRadianceSampler, coord + ivec2(1, 1), 0)), frac.x), 
         frac.y);
-
-    vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), 0.25));
+    float lum = dot(previousSample, vec3(0.2125, 0.7154, 0.0721));
+    float alpha = clamp(0.1 + pow(lum * 0.03, 40), 0.0, 0.5);
+    vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), alpha));
     fragColor = encodeHdr(mixedSample.rgb);
     
     // Writing to gl_FragDepth doens't work with sodium. not sure if it worth computing it in a separate pass.

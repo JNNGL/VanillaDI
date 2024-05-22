@@ -13,6 +13,8 @@
         { "name": "voxelLod", "width": 128, "height": 2048 },
         "final",
         "temporal",
+        "spatial",
+        "spatial2",
         "previousTemporal",
         "previousDepth",
         "previousNormals",
@@ -79,7 +81,6 @@
         },
 
         {
-            "todo": "Clean this up",
             "name": "temporal",
             "intarget": "minecraft:main",
             "outtarget": "temporal",
@@ -115,6 +116,122 @@
                 {
                     "name": "PreviousDepthSampler",
                     "id": "previousDepth"
+                }
+            ]
+        },
+        {
+            "name": "spatial",
+            "intarget": "minecraft:main",
+            "outtarget": "spatial",
+            "auxtargets": [
+                {
+                    "name": "RadianceSampler",
+                    "id": "temporal"
+                },
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "PreviousDataSampler",
+                    "id": "previousData"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                }
+            ],
+            "uniforms": [
+                {
+                    "name": "Step",
+                    "values": [ 1.0 ]
+                }
+            ]
+        },
+        {
+            "name": "spatial",
+            "intarget": "minecraft:main",
+            "outtarget": "spatial2",
+            "auxtargets": [
+                {
+                    "name": "RadianceSampler",
+                    "id": "spatial"
+                },
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "PreviousDataSampler",
+                    "id": "previousData"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                }
+            ],
+            "uniforms": [
+                {
+                    "name": "Step",
+                    "values": [ 2.0 ]
+                }
+            ]
+        },
+        {
+            "name": "spatial",
+            "intarget": "minecraft:main",
+            "outtarget": "spatial",
+            "auxtargets": [
+                {
+                    "name": "RadianceSampler",
+                    "id": "spatial2"
+                },
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "PreviousDataSampler",
+                    "id": "previousData"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                }
+            ],
+            "uniforms": [
+                {
+                    "name": "Step",
+                    "values": [ 4.0 ]
+                }
+            ]
+        },
+        {
+            "name": "spatial",
+            "intarget": "minecraft:main",
+            "outtarget": "spatial2",
+            "auxtargets": [
+                {
+                    "name": "RadianceSampler",
+                    "id": "spatial"
+                },
+                {
+                    "name": "DiffuseDepthSampler",
+                    "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "PreviousDataSampler",
+                    "id": "previousData"
+                },
+                {
+                    "name": "NormalSampler",
+                    "id": "normals"
+                }
+            ],
+            "uniforms": [
+                {
+                    "name": "Step",
+                    "values": [ 8.0 ]
                 }
             ]
         },
@@ -164,7 +281,7 @@
             "auxtargets": [
                 {
                     "name": "LightSampler",
-                    "id": "temporal"
+                    "id": "spatial2"
                 }
             ]
         },

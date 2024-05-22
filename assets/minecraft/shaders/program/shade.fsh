@@ -227,7 +227,7 @@ vec3 randomPointOnSphere(inout vec3 seed) {
 }
 
 bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
-                 inout vec3 normal, out float area, inout float pdf, inout vec3 seed) {
+                 inout vec3 normal, out float area, inout vec3 seed) {
     const float radius = 0.5;
     vec3 n = normalize(fragPos - position);
     normal = randomPointOnSphere(seed);
@@ -238,10 +238,10 @@ bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout 
 }
 
 bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
-                        inout vec3 normal, out float area, inout float pdf, inout vec3 seed) {
+                        inout vec3 normal, out float area, inout vec3 seed) {
     switch (type) {
         case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
-        case 1: return sphereLight(fragPos, position, tbn, color, pointOnLight, normal, area, pdf, seed);
+        case 1: return sphereLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
         // Add your custom light here
     }
 
@@ -269,9 +269,9 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     vec3 bitangent = normalize(vec3(bx, by, bz));
     mat3 tbn = mat3(tangent, bitangent, normalize(cross(tangent, bitangent)));
 
-    float area, pdf = 1.0;
+    float area;
     vec3 lnorm = tbn[2], pos = vec3(x, y, z);
-    bool valid = samplePointOnLight(type, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, pdf, seed);
+    bool valid = samplePointOnLight(type, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, seed);
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
@@ -280,7 +280,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     float dist2 = dist * dist;
     float cosine = dot(lightDir, lnorm);
 
-    float attenuation = float(valid) * (2 * 3.1415926535 * pdf * intensity * diff) * (abs(cosine * area) / dist2);
+    float attenuation = float(valid) * (2 * 3.1415926535 * intensity * diff) * (abs(cosine * area) / dist2);
 
     light l;
     l.position = pos;
@@ -352,7 +352,7 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
 
 vec4 encodeHdr(vec3 color) {
     float m = min(max(color.r, max(color.g, color.b)), 255);
-    if (m == 0.0) return vec4(0.0);
+    if (m <= 0.0) return vec4(0.0);
     if (m < 1.0) return vec4(color, 1.0);
     return vec4(color / m, 1.0 / m);
 }
