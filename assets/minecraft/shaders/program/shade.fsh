@@ -320,6 +320,8 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
             survived = l;
     }
 
+    // TODO: Spatiotemporal resampling
+
     if (survived.radiance == vec3(0.0)) {
         return vec3(0.0);
     }
