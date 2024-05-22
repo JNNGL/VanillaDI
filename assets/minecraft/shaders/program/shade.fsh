@@ -3,7 +3,7 @@
 // *======= CONFIG =======* //
 
 #define ENABLE_SHADOWS
-#define LIGHT_SELECTIONS 8
+#define LIGHT_SELECTIONS 16
 
 #define VOXELIZATION_OFFSET (vec3(0.5, 1.0, 0.0))
 #define MIN_TRACE_DISTANCE 0.015
@@ -199,10 +199,49 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
     return dot(direction, normal) < 0;
 }
 
+bool blockLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
+               inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
+    vec3 direction = normalize(position - fragPos);
+    direction.y *= (1.0 + random(seed));
+    direction = normalize(direction);
+    vec3 absDir = abs(direction);
+    vec3 mask = vec3(greaterThanEqual(absDir.xyz, max(absDir.yzx, absDir.zxy)));
+    mask *= sign(direction);
+    normal = mask;
+
+    position += normal * 0.5;
+    vec3 t = normal.y != 0.0 ? vec3(1, 0, 0) : cross(normal, vec3(0, 1, 0));
+    vec3 b = cross(normal, t);
+
+    pointOnLight = position + (random(seed) - 0.5) * t + (random(seed) - 0.5) * b;
+    area = 1.0;
+
+    return true;
+}
+
+vec3 randomPointOnSphere(inout vec3 seed) {
+    float a = (random(seed) + 1.0) * 3.1415926535;
+    float b = random(seed);
+    float s = sqrt(1.0 - b * b);
+    return vec3(s * cos(a), s * sin(a), b);
+}
+
+bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
+                 inout vec3 normal, out float area, inout float pdf, inout vec3 seed) {
+    const float radius = 0.5;
+    vec3 n = normalize(fragPos - position);
+    normal = randomPointOnSphere(seed);
+    normal *= sign(dot(normal, n));
+    pointOnLight = position + normal * radius;
+    area = 2 * 3.1415926535 * radius * radius;
+    return true;
+}
+
 bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
                         inout vec3 normal, out float area, inout float pdf, inout vec3 seed) {
     switch (type) {
         case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
+        case 1: return sphereLight(fragPos, position, tbn, color, pointOnLight, normal, area, pdf, seed);
         // Add your custom light here
     }
 
@@ -224,6 +263,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     vec3 var = texelFetch(DiffuseSampler, ivec2(base + 10, 0), 0).rgb;
     
     float intensity = var.r * 100;
+    int type = int(var.g * 255);
 
     vec3 tangent = normalize(vec3(tx, ty, tz));
     vec3 bitangent = normalize(vec3(bx, by, bz));
@@ -231,7 +271,7 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
 
     float area, pdf = 1.0;
     vec3 lnorm = tbn[2], pos = vec3(x, y, z);
-    bool valid = samplePointOnLight(0, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, pdf, seed);
+    bool valid = samplePointOnLight(type, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, pdf, seed);
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);

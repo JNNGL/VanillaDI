@@ -71,7 +71,7 @@ bool collectVoxel(ivec3 blockCoord, int x, int y, int z, out bool valid, out boo
     vec3 backProj = homog.xyz / homog.w;
 
     valid = true;
-    return distance(backProj, worldSpace) < depth * 0.15;
+    return distance(backProj, worldSpace) < depth * 0.2;
 }
 
 void collectRow(inout uint row, ivec3 blockCoord, int voxelRow, int voxelDepth) {

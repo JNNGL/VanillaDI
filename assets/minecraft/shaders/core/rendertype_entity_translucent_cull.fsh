@@ -94,7 +94,7 @@ void main() {
             case 7: color = encodeFloat(bitangent.y); break;
             case 8: color = encodeFloat(bitangent.z); break;
             case 9: color = vec4(lightColor, 1.0); break;
-            case 10: color = vec4(intensity, 0.0, 0.0, 1.0); break;
+            case 10: color = vec4(intensity, float(type) / 255, 0.0, 1.0); break;
         }
 
         if (color.a == 0.0) {

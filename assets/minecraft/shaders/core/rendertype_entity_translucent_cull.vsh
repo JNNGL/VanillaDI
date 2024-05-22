@@ -44,7 +44,7 @@ void main() {
     vec4 col = texture(Sampler0, UV0);
     marker = col.rg == vec2(195, 76) / 255 ? 1.0 : 0.0;
     marker = col.rgb == vec3(76, 195, 86) / 255 ? 2.0 : marker;
-    type = 0;
+    type = int(col.b * 255);
     index = int(Color.b * 255);
 
     position0 = 
