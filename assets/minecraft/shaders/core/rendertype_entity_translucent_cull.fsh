@@ -130,11 +130,7 @@ void main() {
         } else if (pixel.x == 35) {
             fragColor = encodeInt(index);
         } else {
-            switch (int(pixel.x) - 32) {
-                case 0: fragColor = encodeFloat1024(pos.x); break;
-                case 1: fragColor = encodeFloat1024(pos.y); break;
-                case 2: fragColor = encodeFloat1024(pos.z); break;
-            }
+            fragColor = encodeFloat1024(pos[int(pixel.x) - 32]);
         }
         return;
     } else if (marker > 0.0) {
