@@ -100,3 +100,25 @@ Tested mods/modpacks:
  - Simply optimized
 
 Lmk if you encounter any issues with mods.
+
+## More screenshots
+
+![image3.png](images/image3.png)
+
+![image4.png](images/image4.png)
+
+![image5.png](images/image5.png)
+
+![image6.png](images/image6.png)
+
+![image7.png](images/image7.png)
+
+![image8.png](images/image8.png)
+
+![image9.png](images/image9.png)
+
+![image10.png](images/image10.png)
+
+![image11.png](images/image11.png)
+
+![image12.png](images/image12.png)
