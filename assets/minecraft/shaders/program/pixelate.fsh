@@ -52,6 +52,7 @@ void main() {
         sgn *= (0.33 / BLOCKDIM);
         sgn += voxel;
         vec2 ss = toScreenSpace(blockOffset, sgn);
+        if (clamp(ss, 0.0, 1.0) != ss) continue;
         vec3 normal = normalize(texture(NormalSampler, ss).rgb * 2.0 - 1.0);
         if (dot(normal, centerNormal) < 0.9) continue;
         float d = texture(DiffuseDepthSampler, ss).r;

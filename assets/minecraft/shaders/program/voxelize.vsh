@@ -1,6 +1,6 @@
 #version 150
 
-#define SKIP_FRAMES 2
+#define SKIP_FRAMES 3
 
 in vec4 Position;
 
