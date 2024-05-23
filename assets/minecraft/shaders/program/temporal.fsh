@@ -85,6 +85,6 @@ void main() {
     vec3 mixedSample = mix(previousSample, color, max(1.0 / floor(frame * 100), alpha));
     fragColor = encodeHdr(mixedSample.rgb);
     
-    // Writing to gl_FragDepth doens't work with sodium. not sure if it worth computing it in a separate pass.
+    // Writing to gl_FragDepth doesn't work with sodium. not sure if it worth computing it in a separate pass.
     gl_FragDepth = clamp(frame, 0.0, 1.0);
 }

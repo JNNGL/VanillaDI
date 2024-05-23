@@ -1,7 +1,5 @@
 #version 330
 
-// *======= CONFIG =======* //
-
 #define ENABLE_SHADOWS
 #define LIGHT_SELECTIONS 16
 
