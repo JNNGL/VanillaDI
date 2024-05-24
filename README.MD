@@ -1,6 +1,6 @@
 ## Vanilla DI
 
------
+<sub>1.20.4 branch | [1.20.5/6 branch](https://github.com/JNNGL/VanillaDI/tree/1.20.5)</sub>
 
 A resource pack that adds custom dynamic lights with soft ray-traced shadows to vanilla Minecraft.
 
