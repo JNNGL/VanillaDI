@@ -62,6 +62,10 @@ void main() {
         sum += sampl;
         wSum += 1.0;
     }
+    if (wSum == 0.0) {
+        sum += decodeHdr(texture(RadianceSampler, texCoord));
+        wSum += 1.0;
+    }
     sum /= max(wSum, 1.0);
     fragColor = encodeHdr(sum);
 }
