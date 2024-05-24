@@ -197,29 +197,9 @@ bool areaLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
     return dot(direction, normal) < 0;
 }
 
-bool blockLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
-               inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
-    vec3 direction = normalize(position - fragPos);
-    direction.y *= (1.0 + random(seed));
-    direction = normalize(direction);
-    vec3 absDir = abs(direction);
-    vec3 mask = vec3(greaterThanEqual(absDir.xyz, max(absDir.yzx, absDir.zxy)));
-    mask *= sign(direction);
-    normal = mask;
-
-    position += normal * 0.5;
-    vec3 t = normal.y != 0.0 ? vec3(1, 0, 0) : cross(normal, vec3(0, 1, 0));
-    vec3 b = cross(normal, t);
-
-    pointOnLight = position + (random(seed) - 0.5) * t + (random(seed) - 0.5) * b;
-    area = 1.0;
-
-    return true;
-}
-
 vec3 randomPointOnSphere(inout vec3 seed) {
-    float a = (random(seed) + 1.0) * 3.1415926535;
-    float b = random(seed);
+    float a = random(seed) * 2.0 * 3.1415926535;
+    float b = random(seed) * 2.0 - 1.0;
     float s = sqrt(1.0 - b * b);
     return vec3(s * cos(a), s * sin(a), b);
 }
@@ -235,11 +215,35 @@ bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout 
     return true;
 }
 
+vec3 randomPointOnDisk(inout vec3 seed, vec3 n) {
+    vec3 rand = vec3(random(seed), random(seed), random(seed)) * 2.0 - 1.0;
+    float r = rand.x * 0.5 + 0.5;
+    float angle = (rand.y + 1.0) * 3.1415926535;
+    float sr = sqrt(r);
+    vec2 p = vec2(sr * cos(angle), sr * sin(angle));
+    vec3 tangent = normalize(rand);
+    vec3 bitangent = cross(tangent, n);
+    tangent = cross(bitangent, n);
+    return tangent * p.x + bitangent * p.y;
+}
+
+bool spotLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, 
+               inout vec3 pointOnLight, inout vec3 normal, out float area, inout vec3 seed) {
+    const float radius = 1.0;
+
+    pointOnLight = position + randomPointOnDisk(seed, normal) * radius;
+    area = 3.1415926535 * radius * radius;
+
+    vec3 direction = normalize(pointOnLight - fragPos);
+    return dot(direction, normal) < -0.9;
+}
+
 bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
                         inout vec3 normal, out float area, inout vec3 seed) {
     switch (type) {
         case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
         case 1: return sphereLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
+        case 2: return spotLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
         // Add your custom light here
     }
 

@@ -29,6 +29,7 @@ The resource pack has some built-in sample light source types in `leather_horse_
 
  - **CustomModelData 2**. Rectangular area light, 1.5×1 blocks. Texture: `minecraft:custom/light0.png`
  - **CustomModelData 3**. Spherical light, radius of 0.5 blocks. Texture: `minecraft:custom/light1.png`
+ - **CustomModelData 3**. Spot light, disk with radius of 1.0 block. Texture: `minecraft:custom/light2.png`
 
 The tint can be calculated as `(intensity * 256 * 256) + (colorIndex * 256) + lightIndex`,
 where `intensity` is the intensity of the light source, `colorIndex` is the index in the color palette and `lightIndex` is the id of the light source.
@@ -57,6 +58,7 @@ Built-in light source types:
 
  - Rectangular area light; Blue channel value: 0
  - Spherical light; Blue channel value: 1 
+ - Spot light; Blue channel value: 2
 
 ![image2.png](images/image2.png)
 

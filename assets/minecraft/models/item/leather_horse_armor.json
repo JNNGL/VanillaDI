@@ -4,8 +4,9 @@
     "layer0": "minecraft:item/leather_horse_armor"
   },
   "overrides": [
-    {"predicate": {"custom_model_data": 1}, "model": "custom/marker"},
-    {"predicate": {"custom_model_data": 2}, "model": "custom/light0"},
-    {"predicate": {"custom_model_data": 3}, "model": "custom/light1"}
+      {"predicate": {"custom_model_data": 1}, "model": "custom/marker"},
+      {"predicate": {"custom_model_data": 2}, "model": "custom/light0"},
+      {"predicate": {"custom_model_data": 3}, "model": "custom/light1"},
+      {"predicate": {"custom_model_data": 4}, "model": "custom/light2"}
   ]
 }
