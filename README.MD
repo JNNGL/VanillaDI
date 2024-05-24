@@ -90,6 +90,47 @@ e.g. leather horse armor.
 }
 ```
 
+## Pixelization
+
+There's an optional pixelization pass that makes the lightning aligned to the block pixels:
+
+![image13.png](images/image13.png)
+
+![image14.png](images/image14.png)
+
+### Enabling pixelization
+
+First, ensure that your `leather_horse_armor` item display with CMD 0 is on *integer* coordinates, e.g: 4.0 -60.0 -9.0. <br>
+Then add the following lines to `shaders/post/transparency.json` before the `blend` pass:
+
+```json
+{
+    "name": "pixelate",
+    "intarget": "minecraft:main",
+    "outtarget": "swap",
+    "auxtargets": [
+        {
+            "name": "RadianceSampler",
+            "id": "spatial2"
+        },
+        {
+            "name": "DiffuseDepthSampler",
+            "id": "minecraft:main:depth"
+        },
+        {
+            "name": "NormalSampler",
+            "id": "normals"
+        }
+    ]
+},
+```
+
+and change the `LightSampler` target to `swap` in the `blend` pass.
+
+![image15.png](images/image15.png)
+
+**Warning**: this feature may be a little buggy.
+
 ## Mod compatibility
 
 The resource pack only uses entity core shaders to pass necessary data to post, so it should be compatible with the mods.
