@@ -135,7 +135,7 @@ and change the `LightSampler` target to `swap` in the `blend` pass.
 
 ## Mod compatibility
 
-The resource pack only uses entity core shaders to pass necessary data to post, so it should be compatible with the mods.
+The resource pack only uses entity core shaders to pass necessary data to post, so it should be compatible with most mods.
 
 Tested mods/modpacks:
 
