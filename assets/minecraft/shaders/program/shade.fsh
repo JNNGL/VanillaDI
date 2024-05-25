@@ -171,7 +171,6 @@ float traceVoxels(vec3 origin, vec3 direction, float maxDist) {
 }
 
 struct reservoir {
-    int index;
     float weight;
     float wSum;
     float m;
@@ -294,14 +293,6 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
     return l;
 }
 
-bool updateReservoir(inout reservoir res, int i, float w, float n, inout vec3 seed) {
-    res.wSum += w;
-    res.m += n;
-    bool u = random(seed) < w / res.wSum;
-    if (u) res.index = i;
-    return u;
-}
-
 vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) {
     reservoir res;
     res.wSum = 0;
@@ -318,7 +309,10 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
         int index = int(floor(random(seed) * lightCount));
         light l = sampleLight(index, fragPos, normal, seed);
         float w = length(l.radiance) / pdf;
-        if (updateReservoir(res, index, w, 1, seed))
+
+        res.wSum += w;
+        res.m += 1.0;
+        if (random(seed) < w / res.wSum)
             survived = l;
     }
 
