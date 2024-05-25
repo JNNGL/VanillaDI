@@ -94,7 +94,7 @@ e.g. leather horse armor.
 
 ## Pixelization
 
-There's an optional pixelization pass that makes the lightning aligned to the block pixels:
+There's an optional pixelization pass that makes the lighting aligned to the block pixels:
 
 ![image13.png](images/image13.png)
 
