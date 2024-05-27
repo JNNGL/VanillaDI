@@ -1,13 +1,14 @@
+# 🚨🚨 EXPERIMENTAL BRANCH 🚨🚨
+
+Only works on 1.20.4, incompatible with Sodium (and many other mods). Expect bugs.
+
 ## Vanilla DI
 
-<sub>1.20.4 branch | [1.20.5/6 branch](https://github.com/JNNGL/VanillaDI/tree/1.20.5)</sub>
+<sub>Stable branches: [1.20.4 branch](https://github.com/JNNGL/VanillaDI/tree/main) | [1.20.5/6 branch](https://github.com/JNNGL/VanillaDI/tree/1.20.5)</sub>
 
 A resource pack that adds custom dynamic lights with soft ray-traced shadows to vanilla Minecraft.
 
-https://github.com/JNNGL/VanillaDI/assets/45935949/a8be5e26-b4af-4c8a-9906-d673bf124cc0
-
-![image0.png](images/image0.png)
-![image1.png](images/image1.png)
+https://github.com/JNNGL/VanillaDI/assets/45935949/97d4ada9-1375-4d71-991d-ab5e8000d37a
 
 ## Usage
 
@@ -132,36 +133,3 @@ and change the `LightSampler` target to `swap` in the `blend` pass.
 ![image15.png](images/image15.png)
 
 **Warning**: this feature may be a little buggy.
-
-## Mod compatibility
-
-The resource pack only uses entity core shaders to pass necessary data to post, so it should be compatible with most mods.
-
-Tested mods/modpacks:
-
- - Fabulously optimized
- - Simply optimized
-
-Lmk if you encounter any issues with mods.
-
-## More screenshots
-
-![image3.png](images/image3.png)
-
-![image4.png](images/image4.png)
-
-![image5.png](images/image5.png)
-
-![image6.png](images/image6.png)
-
-![image7.png](images/image7.png)
-
-![image8.png](images/image8.png)
-
-![image9.png](images/image9.png)
-
-![image10.png](images/image10.png)
-
-![image11.png](images/image11.png)
-
-![image12.png](images/image12.png)
