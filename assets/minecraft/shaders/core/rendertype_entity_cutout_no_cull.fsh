@@ -27,7 +27,7 @@ in vec3 uv3;
 out vec4 fragColor;
 
 void main() {
-    vec4 color = texture(Sampler0, texCoord0);
+    vec4 color = texelFetch(Sampler0, ivec2(texCoord0 * textureSize(Sampler0, 0)), 0);
     if (color.a < 0.1) {
         discard;
     }
@@ -50,13 +50,12 @@ void main() {
         lighting.rgb = mix(overlayColor.rgb, lighting.rgb, overlayColor.a);
         lighting *= lightMapColor;
         lighting = linear_fog(lighting, vertexDistance, FogStart, FogEnd, FogColor);
-        vec4 data = texelFetch(Sampler0, ivec2(texCoord0 * textureSize(Sampler0, 0)), 0);
         if (fragCoord % 2 == ivec2(0, 0)) {
-            fragColor = vec4(lighting.rgb, data.a);
+            fragColor = vec4(lighting.rgb, color.a);
         } else if (fragCoord % 2 == ivec2(1, 1)) {
-            fragColor = vec4(bitangent * 0.5 + 0.5, data.a);
+            fragColor = vec4(bitangent * 0.5 + 0.5, color.a);
         } else {
-            fragColor = data;
+            fragColor = color;
         }
 
         return;
