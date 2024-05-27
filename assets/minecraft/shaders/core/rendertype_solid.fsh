@@ -13,30 +13,18 @@ in float vertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
 in float passUv;
-in vec4 position0;
-in vec4 position1;
-in vec4 position2;
-in vec4 position3;
-in vec3 uv0;
-in vec3 uv1;
-in vec3 uv2;
-in vec3 uv3;
+in vec3 position;
 
 out vec4 fragColor;
 
 void main() {
     if (passUv > 0.0) {
-        vec3 pos1 = position0.xyz / position0.w;
-        vec3 pos2 = position2.xyz / position2.w;
-        vec3 pos3 = gl_PrimitiveID % 2 == 0 ? position1.xyz / position1.w : position3.xyz / position3.w;
-        vec3 bitangent = normalize(gl_PrimitiveID % 2 == 0 ? pos3 - pos1 : pos2 - pos3);
-
-        vec2 coord0 = uv0.xy / uv0.z;
-        vec2 coord1 = uv2.xy / uv2.z;
-        vec2 coord2 = gl_PrimitiveID % 2 == 0 ? uv1.xy / uv1.z : uv3.xy / uv3.z;
-        vec2 r = normalize(gl_PrimitiveID % 2 == 0 ? coord2 - coord0 : coord1 - coord2);
-        if (abs(r.x) > 0.5) bitangent = normalize(gl_PrimitiveID % 2 == 1 ? pos1 - pos3 : pos3 - pos2);
-        if (r.x < -0.5 || r.y < -0.5) bitangent *= -1.0;
+        vec3 p1 = dFdx(position);
+        vec3 p2 = dFdy(position);
+        vec2 t1 = dFdx(texCoord0);
+        vec2 t2 = dFdy(texCoord0);
+        
+        vec3 bitangent = normalize(p1 * t2.x - p2 * t1.x);
 
         ivec2 fragCoord = ivec2(gl_FragCoord.xy);
         vec4 lighting = linear_fog(vertexColor * ColorModulator, vertexDistance, FogStart, FogEnd, FogColor);
