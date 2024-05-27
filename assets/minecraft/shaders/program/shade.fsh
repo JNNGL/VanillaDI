@@ -205,7 +205,7 @@ vec3 randomPointOnSphere(inout vec3 seed) {
 
 bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
                  inout vec3 normal, out float area, inout vec3 seed) {
-    const float radius = 0.5;
+    const float radius = 0.3;
     vec3 n = normalize(fragPos - position);
     normal = randomPointOnSphere(seed);
     normal *= sign(dot(normal, n));

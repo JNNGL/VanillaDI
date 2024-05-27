@@ -58,7 +58,7 @@ void main() {
             float depth = texture(DiffuseDepthSampler, uv).r;
             float luma = dot(radiance, vec3(0.2125, 0.7154, 0.0721));
 
-            float wNorm = pow(max(0, dot(centerNormal, normal)), 128.0);
+            float wNorm = pow(max(0, dot(centerNormal, normal)), 1024.0);
             float wLum = abs(luma - centerLuma) / 5;
             vec4 proj = invProjViewMat * (vec4(uv, depth, 1.0) * 2.0 - 1.0);
             vec3 ws = proj.xyz / proj.w;

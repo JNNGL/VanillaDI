@@ -1,0 +1,1 @@
+The textures I've included in this repo are Poudingue's Vanilla Normals Renewed: https://github.com/Poudingue/Vanilla-Normals-Renewed

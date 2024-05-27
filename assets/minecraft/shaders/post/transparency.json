@@ -18,9 +18,50 @@
         "previousTemporal",
         "previousDepth",
         "previousNormals",
-        "previousData"
+        "previousData",
+        "lighting",
+        "uv",
+        "bitangents",
+        "main"
     ],
     "passes": [
+        {
+            "name": "reconstruct_lighting",
+            "intarget": "minecraft:main",
+            "outtarget": "lighting"
+        },
+        {
+            "name": "reconstruct_uv",
+            "intarget": "minecraft:main",
+            "outtarget": "uv"
+        },
+        {
+            "name": "reconstruct_bitangents",
+            "intarget": "minecraft:main",
+            "outtarget": "bitangents"
+        },
+        {
+            "name": "reconstruct_main",
+            "intarget": "minecraft:main",
+            "outtarget": "main",
+            "auxtargets": [
+                {
+                    "name": "LightingSampler",
+                    "id": "lighting"
+                },
+                {
+                    "name": "UvSampler",
+                    "id": "uv"
+                },
+                {
+                    "name": "AtlasSampler",
+                    "id": "albedo",
+                    "width": 1,
+                    "height": 1,
+                    "bilinear": false
+                }
+            ]
+        },
         {
             "name": "normals",
             "intarget": "minecraft:main",
@@ -29,6 +70,21 @@
                 {
                     "name": "DiffuseDepthSampler",
                     "id": "minecraft:main:depth"
+                },
+                {
+                    "name": "UvSampler",
+                    "id": "uv"
+                },
+                {
+                    "name": "BitangentSampler",
+                    "id": "bitangents"
+                },
+                {
+                    "name": "NormalAtlasSampler",
+                    "id": "normal",
+                    "width": 1,
+                    "height": 1,
+                    "bilinear": false
                 }
             ]
         },
@@ -276,7 +332,7 @@
 
         {
             "name": "blend",
-            "intarget": "minecraft:main",
+            "intarget": "main",
             "outtarget": "final",
             "auxtargets": [
                 {

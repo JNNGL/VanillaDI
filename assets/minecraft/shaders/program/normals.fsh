@@ -2,6 +2,9 @@
 
 uniform sampler2D DiffuseSampler;
 uniform sampler2D DiffuseDepthSampler;
+uniform sampler2D UvSampler;
+uniform sampler2D NormalAtlasSampler;
+uniform sampler2D BitangentSampler;
 
 uniform vec2 InSize;
 
@@ -16,11 +19,11 @@ vec3 reconstructPosition(in vec2 uv, in float z) {
   return position_v.xyz / position_v.w;
 }
 
-vec3 getNormal(sampler2D s, vec2 uv) {
+mat3 getTBN(sampler2D s, vec2 uv) {
     vec2 uv0 = uv;
     float depth0 = texture(s, uv0, 0).r;
     if (depth0 == 1.0) {
-        return vec3(0.0);
+        return mat3(0.0);
     }
 
     vec2 uv1 = uv + vec2(1, 0) / InSize;
@@ -44,12 +47,14 @@ vec3 getNormal(sampler2D s, vec2 uv) {
     }
     if (abs(depth2 - depth0) < abs(depth4 - depth0)) {
         p2 = reconstructPosition(uv2, depth2);
-        sgn *= -1.0;
     } else {
         p2 = reconstructPosition(uv4, depth4);
+        sgn *= -1.0;
     }
 
-    return sgn * normalize(cross(p2 - p0, p1 - p0));
+    vec3 normal = sgn * normalize(cross(p1 - p0, p2 - p0));
+    vec3 bitangent = normalize(texture(BitangentSampler, uv).rgb * 2.0 - 1.0);
+    return mat3(cross(normal, bitangent), bitangent, normal);
 }
 
 void main() {
@@ -59,6 +64,20 @@ void main() {
         return;
     }
 
-    vec3 worldNormal = getNormal(DiffuseDepthSampler, texCoord);
+    mat3 tbn = getTBN(DiffuseDepthSampler, texCoord);
+    vec3 tangentSpace = vec3(0, 0, 1);
+    
+    vec4 uvData = texture(UvSampler, texCoord);
+    if (uvData.a == 1.0) {
+        int pckd = int(uvData.b * 255);
+        ivec2 d = ivec2(pckd & 0x0F, pckd >> 4);
+        ivec2 a = ivec2(uvData.xy * 255);
+        ivec2 atlasCoord = a * 16 + d;
+        vec4 data = texelFetch(NormalAtlasSampler, atlasCoord, 0);
+        tangentSpace.xy = data.rg * 2.0 - 1.0;
+        tangentSpace.z = sqrt(1.0 - dot(tangentSpace.xy, tangentSpace.xy));
+    }
+
+    vec3 worldNormal = tbn * tangentSpace;
     fragColor = vec4(worldNormal * 0.5 + 0.5, 1.0);
 }

@@ -1,0 +1,12 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "one",
+        "dstrgb": "zero"
+    },
+    "vertex": "discard",
+    "fragment": "discard",
+    "attributes": [],
+    "samplers": [],
+    "uniforms": []
+}
