@@ -1,6 +1,7 @@
 #version 150
 
 #moj_import <fog.glsl>
+#moj_import <version.glsl>
 
 uniform sampler2D Sampler0;
 
@@ -11,6 +12,7 @@ uniform vec4 FogColor;
 
 uniform mat4 ProjMat;
 uniform mat3 IViewRotMat;
+uniform mat4 ModelViewMat;
 
 in float vertexDistance;
 in vec4 vertexColor;
@@ -125,7 +127,13 @@ void main() {
             fragColor = encodeFloat(value);
         } else if (pixel.x < 32) {
             int index = int(pixel.x) - 16;
+#if defined(_MC_1_20_4)
             float value = transpose(mat4(IViewRotMat))[index / 4][index % 4];
+#elif defined(_MC_1_20_5)
+            float value = ModelViewMat[index / 4][index % 4];
+#else
+#error Unsupported version.
+#endif
             fragColor = encodeFloat(value);
         } else if (pixel.x == 35) {
             fragColor = encodeInt(index);

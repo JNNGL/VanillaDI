@@ -2,6 +2,7 @@
 
 #moj_import <light.glsl>
 #moj_import <fog.glsl>
+#moj_import <version.glsl>
 
 in vec3 Position;
 in vec4 Color;
@@ -52,7 +53,13 @@ void main() {
     position2 = 
     position3 = vec4(0.0);
 
+#if defined(_MC_1_20_4)
     vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
+#elif defined(_MC_1_20_5)
+    vertexDistance = fog_distance(Position, FogShape);
+#else
+#error Unsupported version.
+#endif
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     lightMapColor = texelFetch(Sampler2, UV2 / 16, 0);
     overlayColor = texelFetch(Sampler1, UV1, 0);
