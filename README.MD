@@ -2,7 +2,7 @@
 
 A resource pack that adds custom dynamic lights with soft ray-traced shadows to vanilla Minecraft.
 
-[Click here to view the branch with experimental features.](https://github.com/JNNGL/VanillaDI/tree/experiments)
+[Click here to view the branch with experimental features.](https://github.com/JNNGL/VanillaDI/tree/experiments) <br>
 [Click here to view the README with the commands updated to 1.20.5+](https://github.com/JNNGL/VanillaDI/blob/main/README_1_20_5.MD)
 
 https://github.com/JNNGL/VanillaDI/assets/45935949/a8be5e26-b4af-4c8a-9906-d673bf124cc0
