@@ -8,16 +8,58 @@ uniform vec4 ColorModulator;
 uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
+uniform mat4 ProjMat;
 
 in float vertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
 in vec4 normal;
 in vec3 position;
+in float emissiveQuad;
+in vec3 emissiveData;
+in vec4 glPos;
+flat in vec2 voxelCoord;
 
 out vec4 fragColor;
 
+vec4 encodeInt(int i) {
+    int s = int(i < 0) * 128;
+    i = abs(i);
+    int r = i % 256;
+    i = i / 256;
+    int g = i % 256;
+    i = i / 256;
+    int b = i % 256;
+    return vec4(float(r) / 255.0, float(g) / 255.0, float(b + s) / 255.0, 1.0);
+}
+
+vec4 encodeFloat1024(float v) {
+    v *= 1024.0;
+    v = floor(v);
+    return encodeInt(int(v));
+}
+
+vec4 encodeFloat(float v) {
+    v *= 40000.0;
+    v = floor(v);
+    return encodeInt(int(v));
+}
+
 void main() {
+    if (emissiveQuad > 0.0) {
+        ivec2 screenSize = ivec2(round(gl_FragCoord.xy / (glPos.xy / glPos.w * 0.5 + 0.5)));
+        ivec2 coord = ivec2(round(voxelCoord * screenSize));
+        ivec2 fragCoord = ivec2(gl_FragCoord.xy);
+        if (fragCoord == coord) {
+            // TODO: Hide these voxels in post
+            fragColor = vec4(emissiveData, 249.0 / 255.0);
+        } else {
+            discard;
+        }
+
+        return;
+    }
+
     vec4 color = texelFetch(Sampler0, ivec2(texCoord0 * textureSize(Sampler0, 0)), 0);
     if (color.a < 0.1) {
         discard;

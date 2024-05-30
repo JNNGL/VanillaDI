@@ -53,6 +53,7 @@ void main() {
     }
 
     lightCount = decodeInt(texelFetch(DiffuseSampler, ivec2(35, 0), 0).rgb);
+    lightCount = 2;
 
     offset = fract(offset);
 

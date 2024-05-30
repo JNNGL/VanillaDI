@@ -61,7 +61,7 @@ void main() {
     vec3 normal = texture(NormalSampler, texCoord).rgb * 2.0 - 1.0;
     vec3 prevNormal = texture(PreviousNormalSampler, screenSpace.xy).rgb * 2.0 - 1.0;
     
-    if (dot(normal, prevNormal) < 0.7) {
+    if (dot(normal, prevNormal) < 0.9) {
         return;
     }
 

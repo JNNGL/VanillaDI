@@ -22,9 +22,75 @@
         "lighting",
         "uv",
         "bitangents",
-        "main"
+        "main",
+        { "name": "tempVoxels", "width": 640, "height": 360 },
+        { "name": "tempVoxels2", "width": 640, "height": 360 },
+        { "name": "emissiveVoxels", "width": 640, "height": 360 },
+        { "name": "prevEmissiveVoxels", "width": 640, "height": 360 },
+        { "name": "lights", "width": 256, "height": 1 },
+        { "name": "prevLights", "width": 256, "height": 1 }
     ],
     "passes": [
+        {
+            "name": "copy_emissive_voxels",
+            "intarget": "minecraft:main",
+            "outtarget": "tempVoxels"
+        },
+        {
+            "name": "move_voxels",
+            "intarget": "prevEmissiveVoxels",
+            "outtarget": "tempVoxels2",
+            "auxtargets": [
+                {
+                    "name": "VoxelCacheSampler",
+                    "id": "prevEmissiveVoxels"
+                },
+                {
+                    "name": "DataSampler",
+                    "id": "minecraft:main"
+                }
+            ]
+        },
+        {
+            "name": "floodfill",
+            "intarget": "tempVoxels",
+            "outtarget": "emissiveVoxels",
+            "auxtargets": [
+                {
+                    "name": "VoxelCacheSampler",
+                    "id": "tempVoxels2"
+                },
+                {
+                    "name": "DataSampler",
+                    "id": "minecraft:main"
+                }
+            ]
+        },
+        {
+            "name": "select_lights",
+            "intarget": "emissiveVoxels",
+            "outtarget": "lights",
+            "auxtargets": [
+                {
+                    "name": "PreviousLightSampler",
+                    "id": "prevLights"
+                },
+                { 
+                    "name": "PreviousDataSampler",
+                    "id": "prevEmissiveVoxels"
+                }
+            ]
+        },
+        {
+            "name": "copy",
+            "intarget": "lights",
+            "outtarget": "prevLights"
+        },
+        {
+            "name": "copy",
+            "intarget": "emissiveVoxels",
+            "outtarget": "prevEmissiveVoxels"
+        },
         {
             "name": "reconstruct_lighting",
             "intarget": "minecraft:main",
@@ -132,6 +198,14 @@
                 {
                     "name": "VoxelLodSampler",
                     "id": "voxelLod"
+                },
+                {
+                    "name": "EmissiveVoxelSampler",
+                    "id": "emissiveVoxels"
+                },
+                {
+                    "name": "LightSampler",
+                    "id": "lights"
                 }
             ]
         },

@@ -15,6 +15,8 @@ uniform sampler2D DiffuseDepthSampler;
 uniform sampler2D NormalSampler;
 uniform sampler2D VoxelSampler;
 uniform sampler2D VoxelLodSampler;
+uniform sampler2D EmissiveVoxelSampler;
+uniform sampler2D LightSampler;
 
 uniform vec2 InSize;
 uniform float Time;
@@ -203,9 +205,8 @@ vec3 randomPointOnSphere(inout vec3 seed) {
     return vec3(s * cos(a), s * sin(a), b);
 }
 
-bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
+bool sphereLight(vec3 fragPos, vec3 position, mat3 tbn, float radius, inout vec3 color, inout vec3 pointOnLight, 
                  inout vec3 normal, out float area, inout vec3 seed) {
-    const float radius = 0.5;
     vec3 n = normalize(fragPos - position);
     normal = randomPointOnSphere(seed);
     normal *= sign(dot(normal, n));
@@ -237,11 +238,11 @@ bool spotLight(vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color,
     return dot(direction, normal) < -0.9;
 }
 
-bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, inout vec3 color, inout vec3 pointOnLight, 
+bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 tbn, float scale, inout vec3 color, inout vec3 pointOnLight, 
                         inout vec3 normal, out float area, inout vec3 seed) {
     switch (type) {
         case 0: return areaLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
-        case 1: return sphereLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
+        case 1: return sphereLight(fragPos, position, tbn, scale, color, pointOnLight, normal, area, seed);
         case 2: return spotLight(fragPos, position, tbn, color, pointOnLight, normal, area, seed);
         // Add your custom light here
     }
@@ -250,6 +251,7 @@ bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 t
 }
 
 light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
+#ifdef CUSTOM_LIGHTS
     int base = index * 11 + 36;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
     float y = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 1, 0), 0).rgb);
@@ -272,7 +274,50 @@ light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
 
     float area;
     vec3 lnorm = tbn[2], pos = vec3(x, y, z);
-    bool valid = samplePointOnLight(type, index, fragPos, vec3(x, y, z), tbn, c, pos, lnorm, area, seed);
+    bool valid = samplePointOnLight(type, index, fragPos, vec3(x, y, z), tbn, 1.0, c, pos, lnorm, area, seed);
+#else
+    int totalBlocks = int(640) * (int(360) - 1);
+    int renderDistance = (int(floor(pow(float(totalBlocks), 1.0 / 3.0))) - 1) / 2;
+    int range = renderDistance * 2;
+
+    index = int(floor(random(seed) * 256.0));
+    vec4 pointer = texelFetch(LightSampler, ivec2(index, 0), 0);
+    ivec3 data = ivec3(pointer.rgb * 255.0);
+    ivec2 coord = ivec2(data.x << 4 | (data.z & 0xF), data.y << 4 | (data.z >> 4));
+    pointer = texelFetch(EmissiveVoxelSampler, coord, 0);
+    int pLinear = (coord.y - 1) * int(640) + coord.x;
+    ivec3 voxel = ivec3(pLinear % range, (pLinear / range) % range, pLinear / (range * range)) - renderDistance;
+
+    if (pointer.a < 1.0) {
+        light l;
+        l.radiance = vec3(0.0);
+        return l;
+    }
+
+    struct palettedLight {
+        vec3 color;
+        float radius;
+        float intensity;
+        vec3 offset;
+    };
+
+    const palettedLight lightPalette[] = palettedLight[](
+        palettedLight(vec3(129.0, 235.0, 229.0) / 255.0,   0.15,  70.0,   vec3(0.0, 0.1, 0.0)), // Soul torch
+        palettedLight(vec3(255.0, 46.0,  26.0 ) / 255.0,   0.15,  70.0,   vec3(0.0, 0.1, 0.0)), // Redstone torch
+        palettedLight(vec3(255.0, 163.0, 63.0 ) / 255.0,   0.15,  70.0,   vec3(0.0, 0.1, 0.0)), // Torch
+        palettedLight(vec3(255.0, 163.0, 63.0 ) / 255.0,   0.4,   40.0,   vec3(0.0, 0.5, 0.0)), // Campfire
+        palettedLight(vec3(129.0, 235.0, 229.0) / 255.0,   0.4,   40.0,   vec3(0.0, 0.5, 0.0))  // Soul campfire
+    );
+
+    palettedLight lightData = lightPalette[int(pointer.r * 255.0)];
+
+    mat3 tbn = mat3(1.0);
+
+    float area;
+    vec3 lnorm = tbn[2], pos = vec3(voxel) + 0.5 + offset + lightData.offset, c = lightData.color;
+    bool valid = samplePointOnLight(1, index, fragPos, pos, tbn, lightData.radius, c, pos, lnorm, area, seed);
+    float intensity = lightData.intensity;
+#endif
     vec3 lightDir = normalize(pos - fragPos);
 
     float diff = max(dot(normal, lightDir), 0.0);
