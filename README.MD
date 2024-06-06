@@ -103,7 +103,7 @@ There's an optional pixelization pass that makes the lighting aligned to the blo
 
 ### Enabling pixelization
 
-First, ensure that your `leather_horse_armor` item display with CMD 0 is on *integer* coordinates, e.g: 4.0 -60.0 -9.0. <br>
+First, ensure that your `leather_horse_armor` item display with CMD 1 is on *integer* coordinates, e.g: 4.0 -60.0 -9.0. <br>
 Then add the following lines to `shaders/post/transparency.json` before the `blend` pass:
 
 ```json

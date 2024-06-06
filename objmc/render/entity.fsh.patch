@@ -1,0 +1,160 @@
+diff --git a/entity.fsh.orig b/entity.fsh
+index 321fbbf..9ca5278 100644
+--- a/entity.fsh.orig
++++ b/entity.fsh
+@@ -2,6 +2,7 @@
+ 
+ #moj_import <light.glsl>
+ #moj_import <fog.glsl>
++#moj_import <version.glsl>
+ 
+ uniform sampler2D Sampler0;
+ 
+@@ -10,6 +11,10 @@ uniform float FogStart;
+ uniform float FogEnd;
+ uniform vec4 FogColor;
+ 
++uniform mat4 ProjMat;
++uniform mat3 IViewRotMat;
++uniform mat4 ModelViewMat;
++
+ uniform vec3 Light0_Direction;
+ uniform vec3 Light1_Direction;
+ 
+@@ -22,6 +27,16 @@ in vec2 texCoord2;
+ in vec3 Pos;
+ in float transition;
+ 
++in float di_marker;
++flat in int di_type;
++in vec4 di_position0;
++in vec4 di_position1;
++in vec4 di_position2;
++in vec4 di_position3;
++flat in int di_index;
++flat in vec3 di_lightColor;
++flat in float di_intensity;
++
+ flat in int isCustom;
+ flat in int isGUI;
+ flat in int isHand;
+@@ -29,7 +44,119 @@ flat in int noshadow;
+ 
+ out vec4 fragColor;
+ 
++vec4 encodeInt(int i) {
++    int s = int(i < 0) * 128;
++    i = abs(i);
++    int r = i % 256;
++    i = i / 256;
++    int g = i % 256;
++    i = i / 256;
++    int b = i % 256;
++    return vec4(float(r) / 255.0, float(g) / 255.0, float(b + s) / 255.0, 1.0);
++}
++
++vec4 encodeFloat1024(float v) {
++    v *= 1024.0;
++    v = floor(v);
++    return encodeInt(int(v));
++}
++
++vec4 encodeFloat(float v) {
++    v *= 40000.0;
++    v = floor(v);
++    return encodeInt(int(v));
++}
++
+ void main() {
++    if (di_marker == 1.0) {
++        int base = di_index * 11;
++        ivec2 coord = ivec2(gl_FragCoord.xy) - ivec2(36, 0);
++
++        if (coord.x < base && coord.x >= base + 11) {
++            discard;
++        }
++
++        if (coord.y > 0) {
++            discard;
++        }
++
++        vec3 pos0 = di_position0.xyz / di_position0.w;
++        vec3 pos1 = di_position1.xyz / di_position1.w;
++        vec3 pos2 = di_position2.xyz / di_position2.w;
++        vec3 pos3 = di_position3.xyz / di_position3.w;
++        vec3 pos = mix(pos0, pos2, 0.5);
++
++        vec3 pPos = gl_PrimitiveID % 2 == 0 ? pos1 : pos3;
++        vec3 tangent = normalize(gl_PrimitiveID % 2 == 1 ? pPos - pos0 : pos2 - pPos);
++        vec3 bitangent = normalize(gl_PrimitiveID % 2 == 0 ? pPos - pos0 : pos2 - pPos);
++
++        // Colored light
++        // 0,1,2 - position
++        // 3,4,5 - tangent
++        // 6,7,8 - bitangent
++        // 9 - color
++        // 10 - properties
++        vec4 color = vec4(0.0);
++        switch (coord.x - base) {
++            case 0: color = encodeFloat1024(pos.x); break;
++            case 1: color = encodeFloat1024(pos.y); break;
++            case 2: color = encodeFloat1024(pos.z); break;
++            case 3: color = encodeFloat(tangent.x); break;
++            case 4: color = encodeFloat(tangent.y); break;
++            case 5: color = encodeFloat(tangent.z); break;
++            case 6: color = encodeFloat(bitangent.x); break;
++            case 7: color = encodeFloat(bitangent.y); break;
++            case 8: color = encodeFloat(bitangent.z); break;
++            case 9: color = vec4(di_lightColor, 1.0); break;
++            case 10: color = vec4(di_intensity, float(di_type) / 255, 0.0, 1.0); break;
++        }
++
++        if (color.a == 0.0) {
++            discard;
++        }
++
++        fragColor = vec4(color);
++        return;
++    } else if (di_marker == 2.0) {
++        vec2 pixel = floor(gl_FragCoord.xy);
++        if (pixel.y >= 1.0 || pixel.x >= 36.0) {
++            discard;
++        }
++
++        vec3 pos0 = di_position0.xyz / di_position0.w;
++        vec3 pos1 = di_position2.xyz / di_position2.w;
++        vec3 pos = pos0 * 0.5 + pos1 * 0.5;
++
++        // Data
++        // 0-15 - projection matrix
++        // 16-31 - view matrix
++        // 32-34 - position
++        // 35 - count
++        if (pixel.x < 16) {
++            mat4 mvp = ProjMat;
++            int index = int(pixel.x);
++            float value = mvp[index / 4][index % 4];
++            fragColor = encodeFloat(value);
++        } else if (pixel.x < 32) {
++            int index = int(pixel.x) - 16;
++#if defined(_MC_1_20_4)
++            float value = transpose(mat4(IViewRotMat))[index / 4][index % 4];
++#elif defined(_MC_1_20_5)
++            float value = ModelViewMat[index / 4][index % 4];
++#else
++#error Unsupported version.
++#endif
++            fragColor = encodeFloat(value);
++        } else if (pixel.x == 35) {
++            fragColor = encodeInt(di_index);
++        } else {
++            fragColor = encodeFloat1024(pos[int(pixel.x) - 32]);
++        }
++        return;
++    } else if (di_marker > 0.0) {
++        discard;
++    }
++
+     vec4 color = mix(texture(Sampler0, texCoord), texture(Sampler0, texCoord2), transition);
+ 
+     //custom lighting

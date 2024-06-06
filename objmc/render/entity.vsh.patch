@@ -1,0 +1,79 @@
+diff --git a/entity.vsh.orig b/entity.vsh
+index 683c5e4..cd5c26b 100644
+--- a/entity.vsh.orig
++++ b/entity.vsh
+@@ -21,6 +21,8 @@ uniform float GameTime;
+ uniform vec3 Light0_Direction;
+ uniform vec3 Light1_Direction;
+ 
++uniform mat3 IViewRotMat;
++
+ out float vertexDistance;
+ out vec4 vertexColor;
+ out vec4 lightColor;
+@@ -30,6 +32,16 @@ out vec2 texCoord2;
+ out vec3 Pos;
+ out float transition;
+ 
++out float di_marker;
++flat out int di_type;
++out vec4 di_position0;
++out vec4 di_position1;
++out vec4 di_position2;
++out vec4 di_position3;
++flat out int di_index;
++flat out vec3 di_lightColor;
++flat out float di_intensity;
++
+ flat out int isCustom;
+ flat out int isGUI;
+ flat out int isHand;
+@@ -44,10 +56,47 @@ void main() {
+     lightColor = minecraft_sample_lightmap(Sampler2, UV2);
+     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
+ 
++    vec4 di_col = texture(Sampler0, UV0);
++    di_marker = di_col.rg == vec2(195, 76) / 255 ? 1.0 : 0.0;
++    di_marker = di_col.rgb == vec3(76, 195, 86) / 255 ? 2.0 : di_marker;
++    di_type = int(di_col.b * 255);
++    di_index = int(Color.b * 255);
++
++    di_position0 = 
++    di_position1 = 
++    di_position2 = 
++    di_position3 = vec4(0.0);
++
+     //objmc
+     #define ENTITY
+     #moj_import <objmc_main.glsl>
+ 
+     gl_Position = ProjMat * ModelViewMat * vec4(Pos, 1.0);
+     vertexDistance = fog_distance(Pos, FogShape);
++
++    if (di_marker > 0.0) {
++        int paletteIndex = int(Color.g * 255);
++        if (paletteIndex == 0) di_lightColor = vec3(1.0);
++        else di_lightColor = texture(Sampler0, UV0 + vec2(paletteIndex % 16, paletteIndex / 16) / textureSize(Sampler0, 0)).rgb;
++
++        di_intensity = Color.r;
++
++        vec3 worldSpace = IViewRotMat * Position;
++        switch (gl_VertexID % 4) {
++            case 0: di_position0 = vec4(worldSpace, 1.0); break;
++            case 1: di_position1 = vec4(worldSpace, 1.0); break;
++            case 2: di_position2 = vec4(worldSpace, 1.0); break;
++            case 3: di_position3 = vec4(worldSpace, 1.0); break;
++        }
++
++        // TODO: better vertex positions
++        vec2 bottomLeftCorner = vec2(-1.0);
++        vec2 topRightCorner = vec2(1.0, 0.1);
++        switch (gl_VertexID % 4) {
++            case 0: gl_Position = vec4(bottomLeftCorner.x, topRightCorner.y,   0, 1); break;
++            case 1: gl_Position = vec4(bottomLeftCorner.x, bottomLeftCorner.y, 0, 1); break;
++            case 2: gl_Position = vec4(topRightCorner.x,   bottomLeftCorner.y, 0, 1); break;
++            case 3: gl_Position = vec4(topRightCorner.x,   topRightCorner.y,   0, 1); break;
++        }
++    }
+ }
+\ No newline at end of file
