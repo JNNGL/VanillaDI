@@ -1,6 +1,6 @@
-diff --git a/entity.vsh.orig b/entity.vsh
+diff --git a/entity.vsh b/entity.vsh
 index 683c5e4..cd5c26b 100644
---- a/entity.vsh.orig
+--- a/entity.vsh
 +++ b/entity.vsh
 @@ -21,6 +21,8 @@ uniform float GameTime;
  uniform vec3 Light0_Direction;

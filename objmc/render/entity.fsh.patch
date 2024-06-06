@@ -1,6 +1,6 @@
-diff --git a/entity.fsh.orig b/entity.fsh
+diff --git a/entity.fsh b/entity.fsh
 index 321fbbf..9ca5278 100644
---- a/entity.fsh.orig
+--- a/entity.fsh
 +++ b/entity.fsh
 @@ -2,6 +2,7 @@
  
