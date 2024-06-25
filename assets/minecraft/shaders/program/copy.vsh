@@ -1,10 +1,5 @@
 #version 150
 
-in vec4 Position;
-
-uniform mat4 ProjMat;
-uniform vec2 OutSize;
-
 out vec2 texCoord;
 
 const vec4[] corners = vec4[](

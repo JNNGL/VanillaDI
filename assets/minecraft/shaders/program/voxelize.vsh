@@ -7,9 +7,6 @@ in vec4 Position;
 uniform sampler2D DiffuseSampler;
 uniform sampler2D VoxelCacheSampler;
 
-uniform mat4 ProjMat;
-uniform vec2 InSize;
-
 out vec2 texCoord;
 flat out mat4 viewProjMat;
 flat out mat4 mvpInverse;

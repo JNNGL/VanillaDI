@@ -3,8 +3,6 @@
 uniform sampler2D DiffuseSampler;
 uniform sampler2D LightSampler;
 
-uniform vec2 InSize;
-
 out vec4 fragColor;
 
 vec3 acesFilm(vec3 x) {

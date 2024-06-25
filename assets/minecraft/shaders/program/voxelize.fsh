@@ -7,8 +7,6 @@ uniform sampler2D DiffuseDepthSampler;
 uniform sampler2D NormalSampler;
 uniform sampler2D VoxelCacheSampler;
 
-uniform vec2 InSize;
-
 in vec2 texCoord;
 flat in mat4 viewProjMat;
 flat in mat4 mvpInverse;
