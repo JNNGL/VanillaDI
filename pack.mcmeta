@@ -1,13 +1,13 @@
 {
     "pack": {
-        "pack_format": 22,
-        "supported_formats": [ 22, 32 ],
+        "pack_format": 34,
+        "supported_formats": [ 22, 32, 34 ],
         "description": "VanillaDI - custom dynamic direct lighting."
     },
     "overlays": {
         "entries": [
             {
-                "formats": 32,
+                "formats": [ 32, 34 ],
                 "directory": "overlay_1_20_5"
             }
         ]
