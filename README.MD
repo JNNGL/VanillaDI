@@ -7,8 +7,8 @@ A resource pack that adds custom dynamic lights with soft ray-traced shadows to 
 
 https://github.com/JNNGL/VanillaDI/assets/45935949/a8be5e26-b4af-4c8a-9906-d673bf124cc0
 
-![image0.png](images/image0.png)
-![image1.png](images/image1.png)
+![image4.png](images/image4.png)
+![image7.png](images/image7.png)
 
 ## Usage
 
@@ -149,13 +149,9 @@ Lmk if you encounter any issues with mods.
 
 ![image3.png](images/image3.png)
 
-![image4.png](images/image4.png)
-
 ![image5.png](images/image5.png)
 
 ![image6.png](images/image6.png)
-
-![image7.png](images/image7.png)
 
 ![image8.png](images/image8.png)
 
