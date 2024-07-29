@@ -57,10 +57,10 @@ vec4 encodeFloat(float v) {
 
 void main() {
     if (marker == 1.0) {
-        int base = index * 11;
+        int base = index * 12;
         ivec2 coord = ivec2(gl_FragCoord.xy) - ivec2(36, 0);
 
-        if (coord.x < base && coord.x >= base + 11) {
+        if (coord.x < base && coord.x >= base + 12) {
             discard;
         }
 
@@ -84,6 +84,7 @@ void main() {
         // 6,7,8 - bitangent
         // 9 - color
         // 10 - properties
+        // 11 - marker
         vec4 color = vec4(0.0);
         switch (coord.x - base) {
             case 0: color = encodeFloat1024(pos.x); break;
@@ -97,6 +98,7 @@ void main() {
             case 8: color = encodeFloat(bitangent.z); break;
             case 9: color = vec4(lightColor, 1.0); break;
             case 10: color = vec4(intensity, float(type) / 255, 0.0, 1.0); break;
+            case 11: color = vec4(90.0, 255.0, 0.0, 255.0) / 255.0; break;
         }
 
         if (color.a == 0.0) {

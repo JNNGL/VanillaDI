@@ -8,6 +8,7 @@
         "weather",
         "normals",
         "swap",
+        { "name": "lights", "width": 65, "height": 1 },
         { "name": "voxels", "width": 2048, "height": 2048 },
         { "name": "voxelCache", "width": 2048, "height": 2048 },
         { "name": "voxelLod", "width": 128, "height": 2048 },
@@ -21,6 +22,11 @@
         "previousData"
     ],
     "passes": [
+        {
+            "name": "sort",
+            "intarget": "minecraft:main",
+            "outtarget": "lights"
+        },
         {
             "name": "normals",
             "intarget": "minecraft:main",
@@ -76,6 +82,10 @@
                 {
                     "name": "VoxelLodSampler",
                     "id": "voxelLod"
+                },
+                {
+                    "name": "LightSampler",
+                    "id": "lights"
                 }
             ]
         },

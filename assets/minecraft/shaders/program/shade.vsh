@@ -3,6 +3,7 @@
 in vec4 Position;
 
 uniform sampler2D DiffuseSampler;
+uniform sampler2D LightSampler;
 
 uniform mat4 ProjMat;
 uniform vec2 InSize;
@@ -52,7 +53,8 @@ void main() {
         offset[i] = decodeFloat1024(color.rgb);
     }
 
-    lightCount = decodeInt(texelFetch(DiffuseSampler, ivec2(35, 0), 0).rgb);
+    vec4 countData = texelFetch(LightSampler, ivec2(64, 0), 0);
+    lightCount = (countData.r == 0.0 ? 0 : int(countData.g * 255.0 + 1.0));
 
     offset = fract(offset);
 

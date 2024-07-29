@@ -15,6 +15,7 @@ uniform sampler2D DiffuseDepthSampler;
 uniform sampler2D NormalSampler;
 uniform sampler2D VoxelSampler;
 uniform sampler2D VoxelLodSampler;
+uniform sampler2D LightSampler;
 
 uniform vec2 InSize;
 uniform float Time;
@@ -250,7 +251,7 @@ bool samplePointOnLight(int type, int index, vec3 fragPos, vec3 position, mat3 t
 }
 
 light sampleLight(int index, vec3 fragPos, vec3 normal, inout vec3 seed) {
-    int base = index * 11 + 36;
+    int base = index * 12 + 36;
     float x = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 0, 0), 0).rgb);
     float y = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 1, 0), 0).rgb);
     float z = decodeFloat1024(texelFetch(DiffuseSampler, ivec2(base + 2, 0), 0).rgb);
@@ -307,7 +308,8 @@ vec3 shade(vec3 color, vec3 fragPos, float depth, vec3 normal, inout vec3 seed) 
 
     for (int i = 0; i < M; i++) {
         int index = int(floor(random(seed) * lightCount));
-        light l = sampleLight(index, fragPos, normal, seed);
+        ivec4 pointers = ivec4(texelFetch(LightSampler, ivec2(index / 4, 0), 0) * 255.0);
+        light l = sampleLight(pointers[index % 4], fragPos, normal, seed);
         float w = length(l.radiance) / pdf;
 
         res.wSum += w;
@@ -362,6 +364,11 @@ void main() {
     }
 
     float depth = texture(DiffuseDepthSampler, texCoord).r;
+    if (depth == 1.0) {
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
     vec3 position = reconstructPosition(texCoord, depth);
     vec3 normal = normalize(texture(NormalSampler, texCoord).rgb * 2.0 - 1.0);
     vec4 color = texture(DiffuseSampler, texCoord);

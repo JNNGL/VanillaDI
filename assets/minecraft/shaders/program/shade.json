@@ -12,7 +12,8 @@
         { "name": "DiffuseDepthSampler" },
         { "name": "NormalSampler" },
         { "name": "VoxelSampler" },
-        { "name": "VoxelLodSampler" }
+        { "name": "VoxelLodSampler" },
+        { "name": "LightSampler" }
     ],
     "uniforms": [
         { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
