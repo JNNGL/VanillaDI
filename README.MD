@@ -32,8 +32,6 @@ All of these values should be in the range 0-255.
 
 The color palette is stored in the texture and `colorIndex` can be calculated as `(y * 16) + x`, where `x` and `y` are pixel coords in the texture. Color index 0 is hardcoded to white as the pixel at (0,0) is reserved for marker and light source type.
 
-Ideally, the id for each newly created light source should be one greater than the highest existing light id. When removing a light source, all higher light ids should be decremented by one so there are no unassigned ids.
-
 To temporarily disable a light source, you can set its intensity to 0.
 
 **Examples**:
