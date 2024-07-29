@@ -12,14 +12,8 @@ https://github.com/JNNGL/VanillaDI/assets/45935949/a8be5e26-b4af-4c8a-9906-d673b
 
 ## Usage
 
-First, you need to spawn a `leather_horse_armor` item display with CustomModelData 1 and color set to
-the number of lights (in the range 0-255). There's currently no spatiotemporal resampling, so keep it as low as possible for the best results.
-
-**Example:** `/summon item_display ~ ~ ~ {Tags:["marker"],item:{id:leather_horse_armor,Count:1,tag:{CustomModelData:1,display:{color:1}}}}` <-- 1 light will be rendered.
-
-You need to update the color of this display every time a light source is created/removed.
-
-**Example:** `/data merge entity @e[tag=marker,limit=1] {item:{tag:{display:{color:2}}}}` <-- Changes the number of rendered lights to 2.
+First, you need to spawn a `leather_horse_armor` item display with CustomModelData 1:
+`/summon item_display ~ ~ ~ {Tags:["marker"],item:{id:leather_horse_armor,Count:1,tag:{CustomModelData:1}}}`
 
 **Note:** teleporting or transforming this display may cause artifacts as its position is used to calculate offset for temporal reprojection.
 
